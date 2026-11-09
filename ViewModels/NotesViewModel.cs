@@ -37,6 +37,9 @@ public partial class NotesViewModel(
     public partial string NoteText { get; set; } = string.Empty;
 
     [ObservableProperty]
+    public partial BibleNote? EditingNote { get; set; }
+
+    [ObservableProperty]
     public partial bool IsGuest { get; set; }
 
     [ObservableProperty]
@@ -49,6 +52,8 @@ public partial class NotesViewModel(
     public partial string? ErrorMessage { get; set; }
 
     public bool IsLocked => IsGuest || !IsPremium;
+
+    public double FormOpacity => IsLocked ? 0.45 : 1;
 
     public bool IsAccount => !IsGuest;
 
@@ -66,19 +71,27 @@ public partial class NotesViewModel(
 
     public string SaveButtonText => IsLocked
         ? Localizer.Get("🔒 Salvar anotação · Premium")
-        : Localizer.Get("Salvar anotação");
+        : IsEditingNote
+            ? Localizer.Get("Salvar alterações")
+            : Localizer.Get("Salvar anotação");
+
+    public bool IsEditingNote => EditingNote is not null;
+
+    public string NoteFormTitle => Localizer.Get(IsEditingNote ? "EDITANDO ANOTAÇÃO" : "NOVA ANOTAÇÃO");
 
     [RelayCommand]
     private async Task LoadAsync()
     {
         IsGuest = userData.CurrentUser is null;
-        IsPremium = userData.CurrentUser?.IsPremiumPreview == true;
+        IsPremium = userData.HasPremiumAccess;
         OnPropertyChanged(nameof(IsLocked));
+        OnPropertyChanged(nameof(FormOpacity));
         OnPropertyChanged(nameof(IsAccount));
         OnPropertyChanged(nameof(AccountGateButtonText));
         OnPropertyChanged(nameof(AccessMessage));
         OnPropertyChanged(nameof(EmptyNotesMessage));
         OnPropertyChanged(nameof(SaveButtonText));
+        OnPropertyChanged(nameof(NoteFormTitle));
         IsBusy = true;
         ErrorMessage = null;
         try
@@ -128,19 +141,34 @@ public partial class NotesViewModel(
         ErrorMessage = null;
         try
         {
-            await userData.SaveNoteAsync(
-                SelectedBook.BookId,
-                SelectedChapter,
-                SelectedVerse,
-                NoteText);
+            if (EditingNote is { } note)
+            {
+                await userData.UpdateNoteAsync(
+                    note.NoteId,
+                    SelectedBook.BookId,
+                    SelectedChapter,
+                    SelectedVerse,
+                    NoteText);
+            }
+            else
+            {
+                await userData.SaveNoteAsync(
+                    SelectedBook.BookId,
+                    SelectedChapter,
+                    SelectedVerse,
+                    NoteText);
+            }
+
             Notes = new ObservableCollection<BibleNote>(await userData.GetNotesAsync());
             RefreshNoteGroups();
             NoteText = string.Empty;
+            EditingNote = null;
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException exception)
         {
-            IsPremium = false;
-            OnPropertyChanged(nameof(IsLocked));
+            logger.LogWarning(exception, "Could not save Bible note {NoteId}.", EditingNote?.NoteId);
+            IsPremium = userData.HasPremiumAccess;
+            ErrorMessage = exception.Message;
         }
         catch (ArgumentException exception)
         {
@@ -159,12 +187,43 @@ public partial class NotesViewModel(
     }
 
     [RelayCommand]
+    private void Edit(BibleNote note)
+    {
+        if (IsLocked)
+        {
+            return;
+        }
+
+        EditingNote = note;
+        SelectedBook = Books.FirstOrDefault(book => book.BookId == note.BookId);
+        SelectedChapter = note.Chapter;
+        SelectedVerse = note.Verse;
+        NoteText = note.Text;
+        ErrorMessage = null;
+    }
+
+    [RelayCommand]
+    private void CancelEdit()
+    {
+        EditingNote = null;
+        NoteText = string.Empty;
+        SelectedChapter = 1;
+        SelectedVerse = 1;
+        ErrorMessage = null;
+    }
+
+    [RelayCommand]
     private async Task DeleteAsync(BibleNote note)
     {
         try
         {
             await userData.DeleteNoteAsync(note.NoteId);
             Notes.Remove(note);
+            if (EditingNote?.NoteId == note.NoteId)
+            {
+                CancelEdit();
+            }
+
             RefreshNoteGroups();
         }
         catch (SqliteException exception)
@@ -200,7 +259,15 @@ public partial class NotesViewModel(
     partial void OnIsPremiumChanged(bool value)
     {
         OnPropertyChanged(nameof(IsLocked));
+        OnPropertyChanged(nameof(FormOpacity));
         OnPropertyChanged(nameof(EmptyNotesMessage));
+        OnPropertyChanged(nameof(SaveButtonText));
+    }
+
+    partial void OnEditingNoteChanged(BibleNote? value)
+    {
+        OnPropertyChanged(nameof(IsEditingNote));
+        OnPropertyChanged(nameof(NoteFormTitle));
         OnPropertyChanged(nameof(SaveButtonText));
     }
 }

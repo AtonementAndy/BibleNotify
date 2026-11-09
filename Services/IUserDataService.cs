@@ -8,6 +8,10 @@ public interface IUserDataService
 
     UserProfile? CurrentUser { get; }
 
+    bool HasPremiumAccess { get; }
+
+    bool IsFirstLoginInSession { get; }
+
     bool IsGuestSession { get; }
 
     Task RegisterAsync(AccountRegistration registration, CancellationToken cancellationToken = default);
@@ -17,6 +21,8 @@ public interface IUserDataService
     Task ContinueAsGuestAsync(CancellationToken cancellationToken = default);
 
     Task SignOutAsync(CancellationToken cancellationToken = default);
+
+    Task MarkWelcomeSeenAsync(CancellationToken cancellationToken = default);
 
     Task SetPremiumPreviewAsync(bool enabled, CancellationToken cancellationToken = default);
 
@@ -45,6 +51,14 @@ public interface IUserDataService
     Task<IReadOnlyList<BibleNote>> GetNotesAsync(CancellationToken cancellationToken = default);
 
     Task SaveNoteAsync(int bookId, int chapter, int verse, string text, CancellationToken cancellationToken = default);
+
+    Task UpdateNoteAsync(
+        int noteId,
+        int bookId,
+        int chapter,
+        int verse,
+        string text,
+        CancellationToken cancellationToken = default);
 
     Task DeleteNoteAsync(int noteId, CancellationToken cancellationToken = default);
 

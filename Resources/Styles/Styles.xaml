@@ -2,6 +2,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     xmlns:controls="clr-namespace:BibleNotify.Controls">
 
     <Style TargetType="ContentPage">
@@ -43,7 +44,21 @@
     <Style TargetType="Border">
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="#000000" Offset="0,6" Radius="16" Opacity="0.24" />
+                <Shadow Brush="#000000" Offset="0,3" Radius="12" Opacity="0.14" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ElevatedCard" TargetType="Border">
+        <Setter Property="Background"
+                Value="{AppThemeBinding Light={StaticResource CardSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
+        <Setter Property="Stroke"
+                Value="{AppThemeBinding Light={StaticResource CardOutlineLight}, Dark={StaticResource CardOutlineDark}}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 24" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="#000000" Offset="0,4" Radius="14" Opacity="0.16" />
             </Setter.Value>
         </Setter>
     </Style>
@@ -138,6 +153,33 @@
                 Value="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+    </Style>
+
+    <Style x:Key="AcrylicCard" TargetType="acrylic:AcrylicView">
+        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="TintColor"
+                Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E293B}" />
+        <Setter Property="TintOpacity" Value="0.25" />
+        <Setter Property="EffectStyle" Value="{AppThemeBinding Light=Light, Dark=Dark}" />
+        <Setter Property="BorderColor"
+                Value="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style x:Key="AcrylicTabBar" TargetType="acrylic:AcrylicView">
+        <Setter Property="CornerRadius" Value="30" />
+        <Setter Property="TintColor"
+                Value="{AppThemeBinding Light=#FFFFFF, Dark=#242C3B}" />
+        <Setter Property="TintOpacity" Value="0.3" />
+        <Setter Property="EffectStyle" Value="{AppThemeBinding Light=Light, Dark=Dark}" />
+        <Setter Property="BorderColor"
+                Value="{AppThemeBinding Light={StaticResource CardOutlineLight}, Dark={StaticResource CardOutlineDark}}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="#000000" Offset="0,4" Radius="14" Opacity="0.18" />
+            </Setter.Value>
+        </Setter>
     </Style>
 
 </ResourceDictionary>

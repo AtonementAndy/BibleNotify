@@ -3,7 +3,7 @@ using Android.Content;
 
 namespace BibleNotify;
 
-[BroadcastReceiver(Enabled = true, Exported = true)]
+[BroadcastReceiver(Enabled = true, Exported = false)]
 [IntentFilter([
     Intent.ActionBootCompleted,
     Intent.ActionTimeChanged,

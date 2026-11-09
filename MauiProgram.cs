@@ -4,6 +4,10 @@ using BibleNotify.Services;
 using BibleNotify.ViewModels;
 using BibleNotify.Localization;
 using Microsoft.Extensions.DependencyInjection;
+using Xe.AcrylicView;
+#if DEBUG && MAUI_DEVFLOW
+using Microsoft.Maui.DevFlow.Agent;
+#endif
 
 namespace BibleNotify;
 
@@ -11,16 +15,21 @@ public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
 	{
-		Localizer.ConfigureFromDeviceRegion();
+		Localizer.ConfigureFromDeviceLanguage();
 
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseAcrylicView()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
+
+#if DEBUG && MAUI_DEVFLOW
+		builder.AddMauiDevFlowAgent();
+#endif
 
 #if ANDROID
 		builder.ConfigureMauiHandlers(handlers =>
@@ -29,6 +38,11 @@ public static class MauiProgram
 		});
 #endif
 
+		builder.Services.AddSingleton(new HttpClient
+		{
+			BaseAddress = new Uri("https://bible-api.com/"),
+			Timeout = TimeSpan.FromSeconds(15)
+		});
 		builder.Services.AddSingleton<IBibleLibrary, BibleLibrary>();
 		builder.Services.AddSingleton<IUserDataService, UserDataService>();
 		builder.Services.AddSingleton<IAppNavigator, ShellNavigator>();

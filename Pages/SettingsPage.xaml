@@ -4,6 +4,7 @@
     x:Name="PageRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     xmlns:controls="clr-namespace:BibleNotify.Controls"
     xmlns:localization="clr-namespace:BibleNotify.Localization"
     xmlns:models="clr-namespace:BibleNotify.Data.Models"
@@ -31,7 +32,7 @@
             <Grid IsVisible="{Binding IsNotMenu}" ColumnDefinitions="40,*" ColumnSpacing="14">
                 <ImageButton
                     Command="{Binding BackToMenuCommand}"
-                    Source="nav_back.svg"
+                    Source="nav_back.png"
                     WidthRequest="40"
                     HeightRequest="40"
                     Padding="10"
@@ -58,108 +59,210 @@
                     FontSize="18"
                     TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
                 <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-                    <Border Padding="14" BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                            Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 24" MinimumHeightRequest="138">
-                        <Border.GestureRecognizers>
+                    <acrylic:AcrylicView Style="{StaticResource AcrylicCard}" Padding="14" MinimumHeightRequest="138">
+                        <acrylic:AcrylicView.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding SelectSectionCommand}" CommandParameter="account" />
-                        </Border.GestureRecognizers>
+                        </acrylic:AcrylicView.GestureRecognizers>
                         <VerticalStackLayout Spacing="10" VerticalOptions="Center">
-                            <Border WidthRequest="40" HeightRequest="40" Padding="10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
-                                    Background="{StaticResource PrimaryGradient}">
-                                <Image Source="settings_account.svg" />
+                            <Border
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                Padding="10"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 14"
+                                Background="{StaticResource PrimaryGradient}">
+
+                                <Image Source="settings_account.png" />
                             </Border>
+
                             <VerticalStackLayout Spacing="2">
-                                <Label Text="{localization:Translate Key='Conta'}" FontFamily="OpenSansSemibold" FontSize="15" />
-                                <Label Text="{localization:Translate Key='Seus dados e perfil'}" FontSize="11"
-                                       TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                                <Label
+                                    Text="{localization:Translate Key='Conta'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15" />
+
+                                <Label
+                                    Text="{localization:Translate Key='Seus dados e perfil'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontSize="11"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+
                             </VerticalStackLayout>
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Column="1" Padding="14" BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                            Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 24" MinimumHeightRequest="138">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectSectionCommand}" CommandParameter="premium" />
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout Spacing="10" VerticalOptions="Center">
-                            <Border WidthRequest="40" HeightRequest="40" Padding="10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
-                                    Background="{StaticResource PrimaryGradient}">
-                                <Image Source="settings_premium.svg" />
+                    </acrylic:AcrylicView>
+                    <acrylic:AcrylicView Grid.Column="1"
+                            Style="{StaticResource AcrylicCard}"
+                            Padding="14"
+                            MinimumHeightRequest="138">
+
+                        <acrylic:AcrylicView.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SelectSectionCommand}"
+                                CommandParameter="premium" />
+
+                        </acrylic:AcrylicView.GestureRecognizers>
+                        <VerticalStackLayout
+                            Spacing="10"
+                            VerticalOptions="Center">
+
+                            <Border
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                Padding="10"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 14"
+                                Background="{StaticResource PrimaryGradient}">
+
+                                <Image Source="settings_premium.png" />
                             </Border>
                             <VerticalStackLayout Spacing="2">
-                                <Label Text="{localization:Translate Key='Premium'}" FontFamily="OpenSansSemibold" FontSize="15" />
-                                <Label Text="{localization:Translate Key='Planos e benefícios'}" FontSize="11"
-                                       TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                                <Label
+                                    Text="{localization:Translate Key='Premium'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15" />
+
+                                <Label
+                                    Text="{localization:Translate Key='Planos e benefícios'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontSize="11"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+
                             </VerticalStackLayout>
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Row="1" Padding="14" BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                            Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 24" MinimumHeightRequest="138">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectSectionCommand}" CommandParameter="notifications" />
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout Spacing="10" VerticalOptions="Center">
-                            <Border WidthRequest="40" HeightRequest="40" Padding="10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
-                                    Background="{StaticResource PrimaryGradient}">
-                                <Image Source="settings_notifications.svg" />
+                    </acrylic:AcrylicView>
+                    <acrylic:AcrylicView
+                        Grid.Row="1"
+                        Style="{StaticResource AcrylicCard}"
+                        Padding="14"
+                        MinimumHeightRequest="138">
+
+                        <acrylic:AcrylicView.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SelectSectionCommand}"
+                                CommandParameter="notifications" />
+
+                        </acrylic:AcrylicView.GestureRecognizers>
+                        <VerticalStackLayout
+                            Spacing="10"
+                            VerticalOptions="Center">
+
+                            <Border
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                Padding="10"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 14"
+                                Background="{StaticResource PrimaryGradient}">
+
+                                <Image Source="settings_notifications.png" />
                             </Border>
                             <VerticalStackLayout Spacing="2">
-                                <Label Text="{localization:Translate Key='Notificações'}" FontFamily="OpenSansSemibold" FontSize="15" />
-                                <Label Text="{localization:Translate Key='Lembretes de leitura'}" FontSize="11"
-                                       TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                                <Label
+                                    Text="{localization:Translate Key='Notificações'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15" />
+
+                                <Label
+                                    Text="{localization:Translate Key='Lembretes de leitura'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontSize="11"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+
                             </VerticalStackLayout>
                         </VerticalStackLayout>
-                    </Border>
-                    <Border Grid.Row="1" Grid.Column="1" Padding="14" BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                            Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 24" MinimumHeightRequest="138">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectSectionCommand}" CommandParameter="theme" />
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout Spacing="10" VerticalOptions="Center">
-                            <Border WidthRequest="40" HeightRequest="40" Padding="10" StrokeThickness="0" StrokeShape="RoundRectangle 14"
-                                    Background="{StaticResource PrimaryGradient}">
-                                <Image Source="settings_theme.svg" />
+                    </acrylic:AcrylicView>
+                    <acrylic:AcrylicView
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Style="{StaticResource AcrylicCard}"
+                        Padding="14"
+                         MinimumHeightRequest="138">
+
+                        <acrylic:AcrylicView.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SelectSectionCommand}"
+                                CommandParameter="theme" />
+
+                        </acrylic:AcrylicView.GestureRecognizers>
+                        <VerticalStackLayout
+                            Spacing="10"
+                            VerticalOptions="Center">
+
+                            <Border
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                Padding="10"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 14"
+                                Background="{StaticResource PrimaryGradient}">
+
+                                <Image Source="settings_theme.png" />
+
                             </Border>
                             <VerticalStackLayout Spacing="2">
-                                <Label Text="{localization:Translate Key='Aparência'}" FontFamily="OpenSansSemibold" FontSize="15" />
-                                <Label Text="{localization:Translate Key='Tema'}" FontSize="11"
-                                       TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                                <Label
+                                    Text="{localization:Translate Key='Aparência'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15" />
+
+                                <Label
+                                    Text="{localization:Translate Key='Tema'}"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalTextAlignment="Center"
+                                    FontSize="11"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+
                             </VerticalStackLayout>
                         </VerticalStackLayout>
-                    </Border>
+                    </acrylic:AcrylicView>
                 </Grid>
             </VerticalStackLayout>
 
-            <Border
-                IsVisible="{Binding IsAccountSection}"
-                Padding="20"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="{localization:Translate Key='SEUS DADOS'}" FontFamily="OpenSansSemibold" FontSize="11" CharacterSpacing="1.5"
-                           TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
-                    <Label Text="{localization:Translate Key='Veja e atualize as informações da sua conta.'}" FontSize="14"
-                           TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                    <Label Text="{localization:Translate Key='Entre ou crie uma conta para cadastrar e editar seu perfil.'}"
-                           IsVisible="{Binding IsGuest}" FontSize="13"
-                           TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+            <Grid IsVisible="{Binding IsAccountSection}">
+                <acrylic:AcrylicView Style="{StaticResource AcrylicCard}" Padding="20">
+                    <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="{localization:Translate Key='SEUS DADOS'}"
+                        FontFamily="OpenSansSemibold"
+                        FontSize="11"
+                        CharacterSpacing="1.5"
+                        TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+
+                    <Label
+                        Text="{localization:Translate Key='Veja e atualize as informações da sua conta.'}"
+                        FontSize="14"
+                        TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+
+                    <Label
+                        Text="{localization:Translate Key='Entre ou crie uma conta para cadastrar e editar seu perfil.'}"
+                        IsVisible="{Binding IsGuest}"
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+
                     <Border Style="{StaticResource GlassInputBorder}">
-                        <controls:ModernEntry Placeholder="{localization:Translate Key='Nome'}" Text="{Binding FirstName}" IsEnabled="{Binding CanEditProfile}" />
+
+                        <controls:ModernEntry Placeholder="{localization:Translate Key='Nome'}" Text="{Binding FirstName}" MaxLength="100" IsEnabled="{Binding CanEditProfile}" />
                     </Border>
                     <Border Style="{StaticResource GlassInputBorder}">
-                        <controls:ModernEntry Placeholder="{localization:Translate Key='Sobrenome'}" Text="{Binding LastName}" IsEnabled="{Binding CanEditProfile}" />
+                        <controls:ModernEntry Placeholder="{localization:Translate Key='Sobrenome'}" Text="{Binding LastName}" MaxLength="100" IsEnabled="{Binding CanEditProfile}" />
                     </Border>
                     <Border Style="{StaticResource GlassInputBorder}" Padding="8,0">
                         <controls:ModernPicker Title="{localization:Translate Key='Função no Corpo de Cristo'}" ItemsSource="{Binding MinistryRoles}"
                                 SelectedItem="{Binding MinistryRole}" IsEnabled="{Binding CanEditProfile}" />
                     </Border>
                     <Border Style="{StaticResource GlassInputBorder}">
-                        <controls:ModernEntry Placeholder="{localization:Translate Key='Telefone'}" Keyboard="Telephone" Text="{Binding Phone}" IsEnabled="{Binding CanEditProfile}" />
+                        <controls:ModernEntry Placeholder="{localization:Translate Key='Telefone'}" Keyboard="Telephone" Text="{Binding Phone}" MaxLength="32" IsEnabled="{Binding CanEditProfile}" />
                     </Border>
                     <Border Style="{StaticResource GlassInputBorder}">
                         <controls:ModernEntry Placeholder="{localization:Translate Key='E-mail'}" Keyboard="Email" Text="{Binding Email}" IsEnabled="False" />
@@ -167,25 +270,21 @@
                     <Button Text="{localization:Translate Key='Salvar perfil'}" Command="{Binding SaveProfileCommand}" IsVisible="{Binding IsAccount}" />
                     <Button Text="{localization:Translate Key='Entrar ou criar conta'}" Command="{Binding SignInCommand}" IsVisible="{Binding IsGuest}" />
                     <Button Text="{localization:Translate Key='Sair da conta'}" Command="{Binding SignOutCommand}" IsVisible="{Binding IsAccount}"
-                            BackgroundColor="Transparent" TextColor="{StaticResource Error}" />
-                </VerticalStackLayout>
-            </Border>
+                            Background="{StaticResource DangerButton}" TextColor="#FFFFFF" />
+                    </VerticalStackLayout>
+                </acrylic:AcrylicView>
+            </Grid>
 
-            <Border
-                IsVisible="{Binding IsPremiumSection}"
-                Padding="20"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24">
+            <Grid IsVisible="{Binding IsPremiumSection}">
+                <acrylic:AcrylicView Style="{StaticResource AcrylicCard}" Padding="20">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{localization:Translate Key='ESCOLHA SEU PLANO'}" FontFamily="OpenSansSemibold" FontSize="11" CharacterSpacing="1.5"
                            TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
                     <Label Text="{localization:Translate Key='Desbloqueie planos de leitura, anotações e personalização completa de notificações.'}"
                            FontSize="14" TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                    <Border Padding="14" BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
+                    <Border Background="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
                             Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                            StrokeShape="RoundRectangle 18">
+                            StrokeShape="RoundRectangle 16" Padding="14">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <VerticalStackLayout Spacing="3">
                                 <Label Text="{localization:Translate Key='Mensal'}" FontFamily="OpenSansSemibold" FontSize="17" />
@@ -195,9 +294,9 @@
                                     CommandParameter="mensal" Padding="14,10" MinimumHeightRequest="44" />
                         </Grid>
                     </Border>
-                    <Border Padding="14" BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
+                    <Border Background="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
                             Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                            StrokeShape="RoundRectangle 18">
+                            StrokeShape="RoundRectangle 16" Padding="14">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <VerticalStackLayout Spacing="3">
                                 <Label Text="{localization:Translate Key='Semestral'}" FontFamily="OpenSansSemibold" FontSize="17" />
@@ -207,9 +306,9 @@
                                     CommandParameter="semestral" Padding="14,10" MinimumHeightRequest="44" />
                         </Grid>
                     </Border>
-                    <Border Padding="14" BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
+                    <Border Background="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
                             Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                            StrokeShape="RoundRectangle 18">
+                            StrokeShape="RoundRectangle 16" Padding="14">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                             <VerticalStackLayout Spacing="3">
                                 <Label Text="{localization:Translate Key='Anual'}" FontFamily="OpenSansSemibold" FontSize="17" />
@@ -222,7 +321,7 @@
                     <Label Text="{localization:Translate Key='A contratação ainda não está ativa. Nenhuma cobrança será feita até a integração de pagamento.'}"
                            FontSize="13" LineHeight="1.25"
                            TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                    <Button Text="{localization:Translate Key='Entrar ou criar conta'}" Command="{Binding SignInCommand}" IsVisible="{Binding IsGuest}" />
+                    <Button Text="{localization:Translate Key='Criar conta'}" Command="{Binding CreateAccountCommand}" IsVisible="{Binding IsGuest}" />
                     <Label Text="{localization:Translate Key='Prévia de demonstração — não é uma compra nem uma assinatura.'}"
                            IsVisible="{Binding IsAccount}" FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
@@ -230,18 +329,14 @@
                             IsVisible="{Binding CanEnablePremiumPreview}" Background="{StaticResource PrimaryGradient}"
                             TextColor="{StaticResource OnPrimary}" />
                     <Button Text="{localization:Translate Key='Desativar prévia Premium'}" Command="{Binding TogglePremiumPreviewCommand}"
-                            IsVisible="{Binding IsPremium}" BackgroundColor="Transparent"
+                            IsVisible="{Binding CanDisablePremiumPreview}" BackgroundColor="Transparent"
                             TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
-                </VerticalStackLayout>
-            </Border>
+                    </VerticalStackLayout>
+                </acrylic:AcrylicView>
+            </Grid>
 
-            <Border
-                IsVisible="{Binding IsNotificationsSection}"
-                Padding="20"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24">
+            <Grid IsVisible="{Binding IsNotificationsSection}">
+                <acrylic:AcrylicView Style="{StaticResource AcrylicCard}" Padding="20">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{localization:Translate Key='NOTIFICAÇÕES'}" FontFamily="OpenSansSemibold" FontSize="11" CharacterSpacing="1.5"
                            TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
@@ -263,11 +358,7 @@
                         <VerticalStackLayout BindableLayout.ItemsSource="{Binding Reminders}" Spacing="8">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="models:PrayerReminder">
-                                    <Border Padding="12"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
-                                            Stroke="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
-                                            StrokeThickness="1"
-                                            StrokeShape="RoundRectangle 16">
+                                    <acrylic:AcrylicView Style="{StaticResource AcrylicCard}" Padding="12">
                                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="4">
                                             <Label Text="{Binding Title}" FontFamily="OpenSansSemibold" FontSize="15" />
                                             <Label Grid.Column="1" Text="{Binding TimeLabel}" FontFamily="OpenSansSemibold" FontSize="14"
@@ -275,16 +366,18 @@
                                             <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Message}" FontSize="12"
                                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
                                             <HorizontalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Spacing="8">
-                                                <Button Text="{localization:Translate Key='Editar'}" Padding="12,4" MinimumHeightRequest="38" FontSize="12"
+                                                <Button Text="{localization:Translate Key='Editar'}" WidthRequest="64" HeightRequest="38"
+                                                        Padding="0" MinimumHeightRequest="38" FontSize="12"
                                                         Command="{Binding BindingContext.EditReminderCommand, Source={x:Reference PageRoot}}"
                                                         CommandParameter="{Binding .}" />
-                                                <Button Text="{localization:Translate Key='Excluir'}" Padding="12,4" MinimumHeightRequest="38" FontSize="12"
-                                                        BackgroundColor="Transparent" TextColor="{StaticResource Error}"
+                                                <Button Text="{localization:Translate Key='Excluir'}" WidthRequest="64" HeightRequest="38"
+                                                        Padding="0" MinimumHeightRequest="38" FontSize="12"
+                                                        Background="{StaticResource DangerButton}" TextColor="{StaticResource OnPrimary}"
                                                         Command="{Binding BindingContext.DeleteReminderCommand, Source={x:Reference PageRoot}}"
                                                         CommandParameter="{Binding .}" />
                                             </HorizontalStackLayout>
                                         </Grid>
-                                    </Border>
+                                    </acrylic:AcrylicView>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
@@ -310,10 +403,10 @@
                            CharacterSpacing="1.2"
                            TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
                     <Border IsVisible="{Binding IsPremium}" Style="{StaticResource GlassInputBorder}">
-                        <controls:ModernEntry Placeholder="{localization:Translate Key='Título'}" Text="{Binding ReminderTitle}" IsEnabled="{Binding CanManagePremiumPreferences}" />
+                        <controls:ModernEntry Placeholder="{localization:Translate Key='Título'}" Text="{Binding ReminderTitle}" MaxLength="100" IsEnabled="{Binding CanManagePremiumPreferences}" />
                     </Border>
                     <Border IsVisible="{Binding IsPremium}" Style="{StaticResource GlassInputBorder}">
-                        <controls:ModernEntry Placeholder="{localization:Translate Key='Mensagem'}" Text="{Binding ReminderMessage}" IsEnabled="{Binding CanManagePremiumPreferences}" />
+                        <controls:ModernEntry Placeholder="{localization:Translate Key='Mensagem'}" Text="{Binding ReminderMessage}" MaxLength="1000" IsEnabled="{Binding CanManagePremiumPreferences}" />
                     </Border>
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsVisible="{Binding IsPremium}">
                         <Border Style="{StaticResource GlassInputBorder}" Padding="8,0">
@@ -324,11 +417,11 @@
                     <Button Text="{localization:Translate Key='Salvar alterações do lembrete'}" Command="{Binding SaveReminderCommand}"
                             IsVisible="{Binding IsPremium}" />
                     <Border IsVisible="{Binding IsPremium}" Style="{StaticResource GlassInputBorder}">
-                        <controls:ModernEntry Placeholder="{localization:Translate Key='Novo título'}" Text="{Binding NewReminderTitle}"
+                        <controls:ModernEntry Placeholder="{localization:Translate Key='Novo título'}" Text="{Binding NewReminderTitle}" MaxLength="100"
                                IsEnabled="{Binding CanManagePremiumPreferences}" />
                     </Border>
                     <Border IsVisible="{Binding IsPremium}" Style="{StaticResource GlassInputBorder}">
-                        <controls:ModernEntry Placeholder="{localization:Translate Key='Nova mensagem'}" Text="{Binding NewReminderMessage}"
+                        <controls:ModernEntry Placeholder="{localization:Translate Key='Nova mensagem'}" Text="{Binding NewReminderMessage}" MaxLength="1000"
                                IsEnabled="{Binding CanManagePremiumPreferences}" />
                     </Border>
                     <Border IsVisible="{Binding IsPremium}" Style="{StaticResource GlassInputBorder}" Padding="8,0">
@@ -339,16 +432,12 @@
                             IsVisible="{Binding IsPremium}" />
                     <Button Text="{localization:Translate Key='Conhecer planos Premium'}" Command="{Binding UpgradeCommand}"
                             IsVisible="{Binding IsNotPremium}" Background="{StaticResource PrimaryGradient}" TextColor="{StaticResource OnPrimary}" />
-                </VerticalStackLayout>
-            </Border>
+                    </VerticalStackLayout>
+                </acrylic:AcrylicView>
+            </Grid>
 
-            <Border
-                IsVisible="{Binding IsThemeSection}"
-                Padding="20"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24">
+            <Grid IsVisible="{Binding IsThemeSection}">
+                <acrylic:AcrylicView Style="{StaticResource AcrylicCard}" Padding="20">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{localization:Translate Key='APARÊNCIA'}" FontFamily="OpenSansSemibold" FontSize="11" CharacterSpacing="1.5"
                            TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
@@ -360,8 +449,9 @@
                                 BackgroundColor="Transparent" />
                     </Border>
                     <Button Text="{localization:Translate Key='Aplicar tema'}" Command="{Binding SaveThemeCommand}" />
-                </VerticalStackLayout>
-            </Border>
+                    </VerticalStackLayout>
+                </acrylic:AcrylicView>
+            </Grid>
 
             <Label Text="{Binding InfoMessage}"
                    TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}"

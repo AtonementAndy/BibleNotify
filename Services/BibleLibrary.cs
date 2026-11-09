@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using BibleNotify.Data.Models;
 using BibleNotify.Localization;
 using Microsoft.Data.Sqlite;
@@ -8,10 +11,41 @@ public sealed class BibleLibrary : IBibleLibrary
 {
     private const string DatabaseAssetName = "bible.db";
     private const string DatabaseFileName = "bible-porbr2018.db";
+    private const int RandomVerseAttempts = 3;
+    private static readonly TimeSpan MinimumOnlineRequestInterval = TimeSpan.FromSeconds(2.1);
+    private static readonly IReadOnlyDictionary<string, string> EnglishBookCodeOverrides =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["SOL"] = "SNG",
+            ["EZE"] = "EZK",
+            ["JOE"] = "JOL",
+            ["NAH"] = "NAM",
+            ["MAR"] = "MRK",
+            ["JOH"] = "JHN",
+            ["PHI"] = "PHP",
+            ["JAM"] = "JAS",
+            ["1JO"] = "1JN",
+            ["2JO"] = "2JN",
+            ["3JO"] = "3JN"
+        };
+    private static readonly IReadOnlyDictionary<string, string> LocalBookCodeOverrides =
+        EnglishBookCodeOverrides.ToDictionary(
+            item => item.Value,
+            item => item.Key,
+            StringComparer.Ordinal);
 
+    private readonly HttpClient _httpClient;
     private readonly SemaphoreSlim _initializationGate = new(1, 1);
+    private readonly SemaphoreSlim _onlineRequestGate = new(1, 1);
+    private readonly ConcurrentDictionary<(int BookId, int Chapter), IReadOnlyList<BibleVerse>> _englishChapters = new();
     private string? _databasePath;
     private int _verseCount;
+    private DateTimeOffset _nextOnlineRequestAt;
+
+    public BibleLibrary(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -95,15 +129,22 @@ public sealed class BibleLibrary : IBibleLibrary
             """;
 
         var books = new List<BookInfo>(66);
+        var isPortuguese = Localizer.IsPortuguese;
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            var bookCode = reader.GetString(1);
+            var localBookCode = reader.GetString(1);
+            var bookCode = isPortuguese
+                ? localBookCode
+                : EnglishBookCodeOverrides.GetValueOrDefault(localBookCode, localBookCode);
+            var testament = reader.GetString(3);
             books.Add(new BookInfo(
                 reader.GetInt32(0),
-                bookCode,
+                localBookCode,
                 Localizer.GetBibleBookName(bookCode, reader.GetString(2)),
-                reader.GetString(3),
+                isPortuguese
+                    ? testament
+                    : testament == "Antigo" ? "Old Testament" : "New Testament",
                 reader.GetInt32(4),
                 reader.GetInt32(5)));
         }
@@ -116,6 +157,11 @@ public sealed class BibleLibrary : IBibleLibrary
         int chapter,
         CancellationToken cancellationToken = default)
     {
+        if (!Localizer.IsPortuguese)
+        {
+            return await GetOnlineChapterAsync(bookId, chapter, cancellationToken).ConfigureAwait(false);
+        }
+
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = """
@@ -148,6 +194,20 @@ public sealed class BibleLibrary : IBibleLibrary
         int verse,
         CancellationToken cancellationToken = default)
     {
+        if (!Localizer.IsPortuguese)
+        {
+            var localBookCode = LocalBookCodeOverrides.GetValueOrDefault(bookCode, bookCode);
+            var book = (await GetBooksAsync(cancellationToken).ConfigureAwait(false))
+                .FirstOrDefault(item => item.Code.Equals(localBookCode, StringComparison.OrdinalIgnoreCase));
+            if (book is null || chapter < 1 || chapter > book.ChapterCount || verse < 1)
+            {
+                return null;
+            }
+
+            var chapterVerses = await GetChapterAsync(book.BookId, chapter, cancellationToken).ConfigureAwait(false);
+            return chapterVerses.FirstOrDefault(item => item.Verse == verse);
+        }
+
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = """
@@ -180,6 +240,30 @@ public sealed class BibleLibrary : IBibleLibrary
         CancellationToken cancellationToken = default)
     {
         await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        if (!Localizer.IsPortuguese)
+        {
+            var books = await GetBooksAsync(cancellationToken).ConfigureAwait(false);
+            for (var attempt = 0; attempt < (excludedVerseId.HasValue ? RandomVerseAttempts : 1); attempt++)
+            {
+                var response = await GetOnlineDataAsync<OnlineRandomVerseResponse>(
+                    "data/web/random",
+                    cancellationToken).ConfigureAwait(false);
+                var verse = response.RandomVerse
+                    ?? throw new InvalidDataException("The online Bible service returned no random verse.");
+                var localBookCode = LocalBookCodeOverrides.GetValueOrDefault(verse.BookId, verse.BookId);
+                var book = books.FirstOrDefault(item =>
+                    item.Code.Equals(localBookCode, StringComparison.OrdinalIgnoreCase))
+                    ?? throw new InvalidDataException("The online Bible service returned an unknown book.");
+                var mappedVerse = MapOnlineVerse(book, verse);
+                if (mappedVerse.VerseId != excludedVerseId)
+                {
+                    return mappedVerse;
+                }
+            }
+
+            return null;
+        }
+
         var availableCount = _verseCount - (excludedVerseId.HasValue ? 1 : 0);
         if (availableCount <= 0)
         {
@@ -217,6 +301,105 @@ public sealed class BibleLibrary : IBibleLibrary
 
         return new BibleVerse(reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.GetInt32(3), reader.GetString(4));
     }
+
+    private async Task<IReadOnlyList<BibleVerse>> GetOnlineChapterAsync(
+        int bookId,
+        int chapter,
+        CancellationToken cancellationToken)
+    {
+        var book = (await GetBooksAsync(cancellationToken).ConfigureAwait(false))
+            .FirstOrDefault(item => item.BookId == bookId);
+        if (book is null || chapter < 1 || chapter > book.ChapterCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(chapter), Localizer.Get("A referência solicitada não está disponível."));
+        }
+
+        if (_englishChapters.TryGetValue((book.BookId, chapter), out var cachedChapter))
+        {
+            return cachedChapter;
+        }
+
+        var response = await GetOnlineDataAsync<OnlineChapter>(
+            $"data/web/{Uri.EscapeDataString(GetEnglishBookCode(book.Code))}/{chapter}",
+            cancellationToken).ConfigureAwait(false);
+        if (response.Verses is null || response.Verses.Length == 0)
+        {
+            throw new InvalidDataException("The online Bible service returned an empty chapter.");
+        }
+
+        var verses = response.Verses
+            .Select(verse => verse is null
+                ? throw new InvalidDataException("The online Bible service returned an empty verse.")
+                : MapOnlineVerse(book, verse, chapter))
+            .ToArray();
+        return _englishChapters.GetOrAdd((book.BookId, chapter), verses);
+    }
+
+    private async Task<T> GetOnlineDataAsync<T>(string requestUri, CancellationToken cancellationToken)
+    {
+        await _onlineRequestGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var delay = _nextOnlineRequestAt - DateTimeOffset.UtcNow;
+            if (delay > TimeSpan.Zero)
+            {
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            }
+
+            using var response = await _httpClient.GetAsync(
+                requestUri,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken).ConfigureAwait(false);
+            _nextOnlineRequestAt = DateTimeOffset.UtcNow + MinimumOnlineRequestInterval;
+            response.EnsureSuccessStatusCode();
+            if (response.Content.Headers.ContentLength is > 262_144)
+            {
+                throw new InvalidDataException("The online Bible service returned an oversized response.");
+            }
+
+            return await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken)
+                .ConfigureAwait(false)
+                ?? throw new InvalidDataException("The online Bible service returned an empty response.");
+        }
+        finally
+        {
+            _onlineRequestGate.Release();
+        }
+    }
+
+    private static BibleVerse MapOnlineVerse(BookInfo book, OnlineVerse verse, int? expectedChapter = null)
+    {
+        if (!string.Equals(
+                verse.BookId,
+                GetEnglishBookCode(book.Code),
+                StringComparison.OrdinalIgnoreCase) ||
+            verse.Chapter < 1 ||
+            verse.Chapter > book.ChapterCount ||
+            verse.Verse < 1 ||
+            string.IsNullOrWhiteSpace(verse.Text) ||
+            (expectedChapter.HasValue && verse.Chapter != expectedChapter.Value))
+        {
+            throw new InvalidDataException("The online Bible service returned an invalid verse.");
+        }
+
+        var verseId = checked(book.BookId * 1_000_000 + verse.Chapter * 1_000 + verse.Verse);
+        return new BibleVerse(verseId, book.BookId, verse.Chapter, verse.Verse, verse.Text);
+    }
+
+    private static string GetEnglishBookCode(string localBookCode) =>
+        EnglishBookCodeOverrides.GetValueOrDefault(localBookCode, localBookCode);
+
+    private sealed record OnlineChapter(
+        [property: JsonPropertyName("verses")] OnlineVerse[]? Verses);
+
+    private sealed record OnlineRandomVerseResponse(
+        [property: JsonPropertyName("random_verse")] OnlineVerse? RandomVerse);
+
+    private sealed record OnlineVerse(
+        [property: JsonPropertyName("book_id")] string BookId,
+        [property: JsonPropertyName("chapter")] int Chapter,
+        [property: JsonPropertyName("verse")] int Verse,
+        [property: JsonPropertyName("text")] string Text);
 
     private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken)
     {

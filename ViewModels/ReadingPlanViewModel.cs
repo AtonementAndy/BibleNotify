@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using BibleNotify.Data.Models;
 using BibleNotify.Localization;
 using BibleNotify.Services;
@@ -48,11 +48,13 @@ public partial class ReadingPlanViewModel(
 
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
+    public bool HasInfoMessage => !string.IsNullOrWhiteSpace(InfoMessage);
+
     public string SelectedPlanActionText => !IsPremium
         ? Localizer.Get("🔒 Disponível no Premium")
         : SelectedPlan?.IsActive == true
             ? Localizer.Get("Continuar plano")
-            : Localizer.Get("Iniciar plano");
+            : Localizer.Get("Usar este plano");
 
     public string UpgradeButtonText => IsGuest
         ? Localizer.Get("Criar conta e conhecer o Premium")
@@ -62,7 +64,7 @@ public partial class ReadingPlanViewModel(
     private async Task LoadAsync()
     {
         IsGuest = userData.CurrentUser is null;
-        IsPremium = userData.CurrentUser?.IsPremiumPreview == true;
+        IsPremium = userData.HasPremiumAccess;
         OnPropertyChanged(nameof(IsAccount));
         OnPropertyChanged(nameof(IsFreeAccount));
         OnPropertyChanged(nameof(IsPremiumLocked));
@@ -99,9 +101,19 @@ public partial class ReadingPlanViewModel(
     }
 
     [RelayCommand]
-    private void SelectPlan(ReadingPlan plan)
+    private async Task SelectPlanAsync(ReadingPlan plan)
     {
+        if (!IsPremium)
+        {
+            await UpgradeAsync();
+            return;
+        }
+
         SetPlans(Plans, plan.PlanId);
+        InfoMessage = Localizer.Format(
+            "Plano {0} selecionado. Toque em {1} para prosseguir.",
+            plan.Title,
+            SelectedPlanActionText);
     }
 
     [RelayCommand]
@@ -118,13 +130,30 @@ public partial class ReadingPlanViewModel(
             return;
         }
 
+        if (SelectedPlan.IsActive)
+        {
+            var nextDay = Days.FirstOrDefault(day => !day.IsCompleted);
+            if (nextDay is null)
+            {
+                InfoMessage = Localizer.Get("Parabéns! Você concluiu este plano.");
+                return;
+            }
+
+            await OpenDayAsync(nextDay);
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
         try
         {
+            var planTitle = SelectedPlan.Title;
             await userData.StartReadingPlanAsync(SelectedPlan.PlanId);
             await LoadCoreAsync();
+            InfoMessage = Localizer.Format(
+                "Plano {0} iniciado! Suas leituras estão prontas abaixo.",
+                planTitle);
         }
         catch (ArgumentOutOfRangeException exception)
         {
@@ -135,6 +164,11 @@ public partial class ReadingPlanViewModel(
         {
             logger.LogError(exception, "Could not start the selected reading plan.");
             ErrorMessage = Localizer.Get("Não foi possível iniciar o plano. Tente novamente.");
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            logger.LogWarning(exception, "Reading plan access was denied.");
+            ErrorMessage = Localizer.Get("Este recurso está disponível no Premium.");
         }
         finally
         {
@@ -169,6 +203,16 @@ public partial class ReadingPlanViewModel(
             logger.LogError(exception, "Could not update reading plan progress.");
             ErrorMessage = Localizer.Get("Não foi possível atualizar o progresso. Tente novamente.");
         }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            logger.LogWarning(exception, "The selected day does not belong to the active reading plan.");
+            ErrorMessage = exception.Message;
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            logger.LogWarning(exception, "Reading plan progress access was denied.");
+            InfoMessage = Localizer.Get("Marcar o progresso do plano é um benefício Premium.");
+        }
     }
 
     [RelayCommand]
@@ -184,7 +228,7 @@ public partial class ReadingPlanViewModel(
     private async Task LoadCoreAsync()
     {
         IsGuest = userData.CurrentUser is null;
-        IsPremium = userData.CurrentUser?.IsPremiumPreview == true;
+        IsPremium = userData.HasPremiumAccess;
         OnPropertyChanged(nameof(IsAccount));
         OnPropertyChanged(nameof(IsFreeAccount));
         OnPropertyChanged(nameof(IsPremiumLocked));
@@ -228,4 +272,7 @@ public partial class ReadingPlanViewModel(
 
     partial void OnErrorMessageChanged(string? value) =>
         OnPropertyChanged(nameof(HasError));
+
+    partial void OnInfoMessageChanged(string? value) =>
+        OnPropertyChanged(nameof(HasInfoMessage));
 }

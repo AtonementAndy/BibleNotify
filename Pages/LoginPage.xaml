@@ -6,232 +6,276 @@
     xmlns:controls="clr-namespace:BibleNotify.Controls"
     xmlns:localization="clr-namespace:BibleNotify.Localization"
     xmlns:vm="clr-namespace:BibleNotify.ViewModels"
+    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     x:DataType="vm:LoginViewModel"
     Shell.NavBarIsVisible="False"
-    BackgroundColor="{AppThemeBinding Light={StaticResource CanvasLight}, Dark={StaticResource CanvasDark}}"
     Padding="0">
 
     <ScrollView>
+        <!-- Fundo Premium -->
         <Grid
-            Padding="28,32"
-            RowDefinitions="*,Auto"
-            MinimumHeightRequest="700"
-            Background="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}">
+            Padding="28,40,28,20">
+            <Grid.Background>
+                <LinearGradientBrush
+                    StartPoint="0,0"
+                    EndPoint="1,1">
+                    <GradientStop
+                        Color="{AppThemeBinding Light=#F8FAFC, Dark=#1E293B}"
+                        Offset="0.0" />
+                    <GradientStop
+                        Color="{AppThemeBinding Light=#E2E8F0, Dark=#0F172A}"
+                        Offset="1.0" />
+                </LinearGradientBrush>
+            </Grid.Background>
 
-            <Grid Grid.Row="0">
-                <Ellipse
-                    WidthRequest="250"
-                    HeightRequest="250"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    Margin="0,-90,-110,0"
-                    Fill="{StaticResource Secondary}"
-                    Opacity="0.16"/>
-                <Ellipse
-                    WidthRequest="170"
-                    HeightRequest="170"
-                    HorizontalOptions="Start"
-                    VerticalOptions="End"
-                    Margin="-95,0,0,-80"
-                    Fill="{StaticResource Primary}"
-                    Opacity="0.13"/>
+            <!-- Bolinhas no Fundo (Elipses) -->
+            <Ellipse
+                WidthRequest="240"
+                HeightRequest="240"
+                HorizontalOptions="End"
+                VerticalOptions="Start"
+                Margin="0,-70,-90,0"
+                Fill="{StaticResource Primary}"
+                Opacity="0.22" />
+            <Ellipse
+                WidthRequest="220"
+                HeightRequest="220"
+                HorizontalOptions="End"
+                VerticalOptions="Center"
+                Margin="0,40,-80,0"
+                Fill="{StaticResource Primary}"
+                Opacity="0.25" />
+            <Ellipse
+                WidthRequest="190"
+                HeightRequest="190"
+                HorizontalOptions="Start"
+                VerticalOptions="End"
+                Margin="-85,0,0,-40"
+                Fill="{StaticResource Accent}"
+                Opacity="0.22" />
 
-                <VerticalStackLayout
-                    Spacing="18"
-                    VerticalOptions="Start">
+            <!-- CONTEÚDO PRINCIPAL (Empilhado Verticalmente) -->
+            <VerticalStackLayout
+                Spacing="24"
+                VerticalOptions="Start">
 
-                    <HorizontalStackLayout Spacing="14">
-                        <Border
-                            WidthRequest="72"
-                            HeightRequest="72"
-                            Padding="11"
-                            HorizontalOptions="Start"
-                            VerticalOptions="Center"
-                            BackgroundColor="{StaticResource Primary}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 24">
-                            <Image
-                                Source="brand_mark.svg"
-                                Aspect="AspectFit"
-                                SemanticProperties.Description="{localization:Translate Key='Símbolo do Bible Notify'}"/>
-                        </Border>
-
-                        <HorizontalStackLayout
-                            Spacing="6"
-                            VerticalOptions="Center">
-                            <Label
-                                Text="Bible"
-                                FontFamily="OpenSansSemibold"
-                                FontSize="30"
-                                TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
-                                CharacterSpacing="0.3"
-                                VerticalOptions="Center"/>
-                            <Label
-                                Text="Notify"
-                                FontFamily="OpenSansSemibold"
-                                FontSize="30"
-                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryTextDark}}"
-                                CharacterSpacing="0.3"
-                                VerticalOptions="Center"/>
-                        </HorizontalStackLayout>
-                    </HorizontalStackLayout>
-
-
-
-                    <VerticalStackLayout Spacing="10">
+                <!-- Logo -->
+                <HorizontalStackLayout
+                    Spacing="14">
+                    <Border
+                        WidthRequest="72"
+                        HeightRequest="72"
+                        Padding="11"
+                        BackgroundColor="{StaticResource Primary}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 24">
+                        <Image
+                            Source="brand_mark.png"
+                            Aspect="AspectFit"
+                            SemanticProperties.Description="Símbolo do Bible Notify" />
+                    </Border>
+                    <HorizontalStackLayout
+                        Spacing="6"
+                        VerticalOptions="Center">
                         <Label
-                            Text="{localization:Translate Key='Um momento com a Palavra pode mudar o seu dia.'}"
+                            Text="Bible"
                             FontFamily="OpenSansSemibold"
                             FontSize="30"
-                            LineHeight="1.05"
-                            SemanticProperties.HeadingLevel="Level1"/>
+                            TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
+                            CharacterSpacing="0.3"
+                            VerticalOptions="Center" />
                         <Label
-                            Text="{localization:Translate Key='Entre ou crie sua conta para continuar.'}"
-                            FontSize="16"
-                            LineHeight="1.35"
-                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource MutedDark}}"/>
-                    </VerticalStackLayout>
+                            Text="Notify"
+                            FontFamily="OpenSansSemibold"
+                            FontSize="30"
+                            TextColor="{StaticResource Primary}"
+                            CharacterSpacing="0.3"
+                            VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </HorizontalStackLayout>
 
+                <!-- Títulos -->
+                <VerticalStackLayout
+                    Spacing="10">
+                    <Label
+                        Text="{localization:Translate Key='Um momento com a Palavra pode mudar o seu dia.'}"
+                        FontFamily="OpenSansSemibold"
+                        FontSize="30"
+                        LineHeight="1.05"
+                        TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
+                        SemanticProperties.HeadingLevel="Level1" />
+                    <Label
+                        Text="{localization:Translate Key='Entre ou crie sua conta para continuar.'}"
+                        FontSize="16"
+                        LineHeight="1.35"
+                        TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                </VerticalStackLayout>
+
+                <acrylic:AcrylicView
+                    Style="{StaticResource AcrylicCard}"
+                    Padding="16"
+                    CornerRadius="20">
+                    <VerticalStackLayout Spacing="10">
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="10"
+                            IsVisible="{Binding IsRegistering}">
+                            <Border Style="{StaticResource GlassInputBorder}">
+                                <controls:ModernEntry
+                                    Placeholder="{localization:Translate Key='Nome'}"
+                                    Text="{Binding FirstName}"
+                                    MaxLength="100"
+                                    ReturnType="Next" />
+                            </Border>
+                            <Border
+                                Grid.Column="1"
+                                Style="{StaticResource GlassInputBorder}">
+                                <controls:ModernEntry
+                                    Placeholder="{localization:Translate Key='Sobrenome'}"
+                                    Text="{Binding LastName}"
+                                    MaxLength="100"
+                                    ReturnType="Next" />
+                            </Border>
+                        </Grid>
+                        <Border
+                            IsVisible="{Binding IsRegistering}"
+                            Style="{StaticResource GlassInputBorder}"
+                            Padding="8,0">
+                            <controls:ModernPicker
+                                Title="{localization:Translate Key='Sua função no Corpo de Cristo'}"
+                                ItemsSource="{Binding MinistryRoles}"
+                                SelectedItem="{Binding SelectedMinistryRole}" />
+                        </Border>
+                        <Border
+                            IsVisible="{Binding IsRegistering}"
+                            Style="{StaticResource GlassInputBorder}">
+                            <controls:ModernEntry
+                                Placeholder="{localization:Translate Key='Telefone (opcional)'}"
+                                Text="{Binding Phone}"
+                                MaxLength="32"
+                                Keyboard="Telephone"
+                                ReturnType="Next" />
+                        </Border>
+                        <Border Style="{StaticResource GlassInputBorder}">
+                            <controls:ModernEntry
+                                AutomationId="LoginEmailEntry"
+                                Placeholder="{localization:Translate Key='E-mail'}"
+                                Text="{Binding Email}"
+                                MaxLength="254"
+                                Keyboard="Email"
+                                ReturnType="Next" />
+                        </Border>
+                        <Border Style="{StaticResource GlassInputBorder}">
+                            <controls:ModernEntry
+                                AutomationId="LoginPasswordEntry"
+                                Placeholder="{Binding PasswordPlaceholder}"
+                                Text="{Binding Password}"
+                                MaxLength="1024"
+                                IsPassword="True"
+                                ReturnType="{Binding PasswordReturnType}" />
+                        </Border>
+                        <Border
+                            IsVisible="{Binding IsRegistering}"
+                            Style="{StaticResource GlassInputBorder}">
+                            <controls:ModernEntry
+                                Placeholder="{localization:Translate Key='Confirme a senha'}"
+                                Text="{Binding ConfirmPassword}"
+                                MaxLength="1024"
+                                IsPassword="True"
+                                ReturnType="Done" />
+                        </Border>
+                    </VerticalStackLayout>
+                </acrylic:AcrylicView>
+
+                <!-- ÁREA DOS BOTÕES -->
+                <VerticalStackLayout
+                    Spacing="16"
+                    Margin="0,10,0,0">
+                    <Label
+                        Text="{Binding ErrorMessage}"
+                        TextColor="{StaticResource Error}"
+                        FontSize="13"
+                        HorizontalTextAlignment="Center" />
+
+                    <!-- BOTÃO PRINCIPAL COM GRADIENTE -->
                     <Border
-                        Padding="16"
-                        IsVisible="{Binding IsRegistering}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                        Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 20">
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10"
-                                RowSpacing="10">
-                            <Border Grid.Row="0"
-                                    Grid.Column="0"
-                                    Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='Nome'}"
-                                        Text="{Binding FirstName}"
-                                        ReturnType="Next"/>
-                            </Border>
-                            <Border Grid.Row="0"
-                                    Grid.Column="1"
-                                    Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='Sobrenome'}"
-                                        Text="{Binding LastName}"
-                                        ReturnType="Next"/>
-                            </Border>
-                            <Border Grid.Row="1"
-                                    Grid.ColumnSpan="2"
-                                    Style="{StaticResource GlassInputBorder}"
-                                    Padding="8,0">
-                                <controls:ModernPicker
-                                    Title="{localization:Translate Key='Sua função no Corpo de Cristo'}"
-                                    ItemsSource="{Binding MinistryRoles}"
-                                    SelectedItem="{Binding SelectedMinistryRole}"/>
-                            </Border>
-                            <Border Grid.Row="2"
-                                    Grid.ColumnSpan="2"
-                                    Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='Telefone (opcional)'}"
-                                        Text="{Binding Phone}"
-                                        Keyboard="Telephone"
-                                        ReturnType="Next"/>
-                            </Border>
-                            <Border Grid.Row="3"
-                                    Grid.ColumnSpan="2"
-                                    Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='E-mail'}"
-                                        Text="{Binding Email}"
-                                        Keyboard="Email"
-                                        ReturnType="Next"/>
-                            </Border>
-                            <Border Grid.Row="4"
-                                    Grid.ColumnSpan="2"
-                                    Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='Senha (mín. 8 caracteres)'}"
-                                        Text="{Binding Password}"
-                                        IsPassword="True"
-                                        ReturnType="Next"/>
-                            </Border>
-                            <Border Grid.Row="5"
-                                    Grid.ColumnSpan="2"
-                                    Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='Confirme a senha'}"
-                                        Text="{Binding ConfirmPassword}"
-                                        IsPassword="True"
-                                        ReturnType="Done"/>
-                            </Border>
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 20"
+                        HeightRequest="56">
+                        <Border.Background>
+                            <LinearGradientBrush
+                                StartPoint="0,0"
+                                EndPoint="1,0">
+                                <GradientStop
+                                    Color="#37B6E9"
+                                    Offset="0.0" />
+                                <GradientStop
+                                    Color="#4B4CED"
+                                    Offset="1.0" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.Shadow>
+                            <Shadow
+                                Brush="#4B4CED"
+                                Offset="0,6"
+                                Radius="12"
+                                Opacity="0.5" />
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SubmitCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid>
+                            <ActivityIndicator
+                                IsRunning="{Binding IsBusy}"
+                                IsVisible="{Binding IsBusy}"
+                                Color="White"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
+                            <Label
+                                Text="{Binding SubmitButtonText}"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                FontSize="16"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                IsVisible="{Binding IsNotBusy}" />
                         </Grid>
                     </Border>
 
-                    <Border
-                        Padding="16"
-                        IsVisible="{Binding IsSigningIn}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                        Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 20">
-                        <VerticalStackLayout Spacing="10">
-                            <Border Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='E-mail'}"
-                                        Text="{Binding Email}"
-                                        Keyboard="Email"
-                                        ReturnType="Next"/>
-                            </Border>
-                            <Border Style="{StaticResource GlassInputBorder}">
-                                <controls:ModernEntry Placeholder="{localization:Translate Key='Senha'}"
-                                        Text="{Binding Password}"
-                                        IsPassword="True"
-                                        ReturnType="Done"/>
-                            </Border>
-                        </VerticalStackLayout>
-                    </Border>
+                    <!-- ALTERNAR MODO -->
+                    <Label
+                        Text="{Binding ModeSwitchText}"
+                        TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
+                        FontSize="14"
+                        HorizontalOptions="Center"
+                        Margin="0,-4,0,0">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding ToggleModeCommand}" />
+                        </Label.GestureRecognizers>
+                    </Label>
 
+                    <!-- BOTÃO CONVIDADO -->
+                    <acrylic:AcrylicView
+                        Style="{StaticResource AcrylicCard}"
+                        Padding="0"
+                        HeightRequest="56">
+                        <acrylic:AcrylicView.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding ContinueAsGuestCommand}" />
+                        </acrylic:AcrylicView.GestureRecognizers>
+                        <Label
+                            Text="{localization:Translate Key='Continuar sem conta'}"
+                            TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            FontSize="15"
+                            FontAttributes="Bold" />
+                    </acrylic:AcrylicView>
                 </VerticalStackLayout>
-            </Grid>
 
-            <VerticalStackLayout Grid.Row="1"
-                    Spacing="8">
-                <Label
-                    Text="{Binding ErrorMessage}"
-                    TextColor="{StaticResource Error}"
-                    FontSize="13"/>
-                <ActivityIndicator
-                    IsRunning="{Binding IsBusy}"
-                    IsVisible="{Binding IsBusy}"
-                    Color="{StaticResource Primary}"/>
-                <Button
-                    Text="{Binding SubmitButtonText}"
-                    IsVisible="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                    Command="{Binding SubmitCommand}"
-                    MinimumHeightRequest="54"
-                    CornerRadius="18"
-                    FontSize="15"/>
-                <Button
-                    Text="{Binding ModeSwitchText}"
-                    Command="{Binding ToggleModeCommand}"
-                    Background="{StaticResource TransparentButtonBackground}"
-                    TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
-                    MinimumHeightRequest="40"
-                    CornerRadius="14"
-                    FontSize="14"
-                    Padding="12,6"/>
-                <Border
-                    Padding="0"
-                    BackgroundColor="#242C3B"
-                    Stroke="#4B4CED"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 18"
-                    HeightRequest="50">
-                    <Button
-                        Text="{localization:Translate Key='Continuar sem conta'}"
-                        Command="{Binding ContinueAsGuestCommand}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource QuietButtonBackgroundLight}, Dark={StaticResource QuietButtonBackgroundDark}}"
-                        TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
-                        MinimumHeightRequest="50"
-                        CornerRadius="18"
-                        FontSize="15"
-                        SemanticProperties.Hint="{localization:Translate Key='Abre o aplicativo em modo sem conta e prepara a Bíblia offline'}"/>
-                </Border>
             </VerticalStackLayout>
         </Grid>
     </ScrollView>
-
 </ContentPage>

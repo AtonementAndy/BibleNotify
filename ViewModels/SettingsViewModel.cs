@@ -130,7 +130,29 @@ public partial class SettingsViewModel(
 
     public bool IsNotPremium => !IsPremium;
 
-    public bool CanEnablePremiumPreview => IsAccount && !IsPremium;
+    public bool CanEnablePremiumPreview
+    {
+        get
+        {
+#if DEBUG
+            return IsAccount && !IsPremium;
+#else
+            return false;
+#endif
+        }
+    }
+
+    public bool CanDisablePremiumPreview
+    {
+        get
+        {
+#if DEBUG
+            return IsAccount && IsPremium;
+#else
+            return false;
+#endif
+        }
+    }
 
     public string PremiumGateMessage => IsGuest
         ? Localizer.Get("Recurso Premium. Entre ou crie uma conta para conhecer a prévia.")
@@ -165,6 +187,11 @@ public partial class SettingsViewModel(
         CurrentSection = normalizedSection is "account" or "premium" or "notifications" or "theme"
             ? normalizedSection
             : "menu";
+        if (CurrentSection == "menu")
+        {
+            InfoMessage = null;
+            ErrorMessage = null;
+        }
     }
 
     [RelayCommand]
@@ -177,7 +204,7 @@ public partial class SettingsViewModel(
     private async Task LoadAsync()
     {
         IsGuest = userData.CurrentUser is null;
-        IsPremium = userData.CurrentUser?.IsPremiumPreview == true;
+        IsPremium = userData.HasPremiumAccess;
         OnPropertyChanged(nameof(IsAccount));
         OnPropertyChanged(nameof(IsPremiumPreview));
         OnPropertyChanged(nameof(IsNotPremium));
@@ -186,6 +213,7 @@ public partial class SettingsViewModel(
         OnPropertyChanged(nameof(CanEditNotificationDetails));
         OnPropertyChanged(nameof(CanManagePremiumPreferences));
         OnPropertyChanged(nameof(CanEnablePremiumPreview));
+        OnPropertyChanged(nameof(CanDisablePremiumPreview));
         OnPropertyChanged(nameof(PremiumGateMessage));
         OnPropertyChanged(nameof(AccountStatus));
         OnPropertyChanged(nameof(ReminderSaveButtonText));
@@ -279,8 +307,9 @@ public partial class SettingsViewModel(
     [RelayCommand]
     private async Task TogglePremiumPreviewAsync()
     {
-        if (userData.CurrentUser is null)
+        if (!CanEnablePremiumPreview && !CanDisablePremiumPreview)
         {
+            ErrorMessage = Localizer.Get("A prévia Premium só fica disponível em compilações de desenvolvimento.");
             return;
         }
 
@@ -293,6 +322,7 @@ public partial class SettingsViewModel(
             OnPropertyChanged(nameof(CanEditNotificationDetails));
             OnPropertyChanged(nameof(CanManagePremiumPreferences));
             OnPropertyChanged(nameof(CanEnablePremiumPreview));
+            OnPropertyChanged(nameof(CanDisablePremiumPreview));
             OnPropertyChanged(nameof(AccountStatus));
             InfoMessage = IsPremium
                 ? Localizer.Get("Prévia Premium ativada neste aparelho. Nenhuma compra ou cobrança foi realizada.")
@@ -303,6 +333,11 @@ public partial class SettingsViewModel(
         {
             logger.LogError(exception, "Could not change the local Premium preview.");
             ErrorMessage = Localizer.Get("Não foi possível atualizar o nível da conta.");
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            logger.LogWarning(exception, "The local Premium preview is not available in this build.");
+            ErrorMessage = Localizer.Get("A prévia Premium só fica disponível em compilações de desenvolvimento.");
         }
         catch (InvalidOperationException exception)
         {
@@ -511,6 +546,9 @@ public partial class SettingsViewModel(
     private Task SignInAsync() => navigator.NavigateToLoginAsync();
 
     [RelayCommand]
+    private Task CreateAccountAsync() => navigator.NavigateToRegistrationAsync();
+
+    [RelayCommand]
     private Task UpgradeAsync() => navigator.NavigateToPremiumAsync();
 
     [RelayCommand]
@@ -581,6 +619,7 @@ public partial class SettingsViewModel(
         OnPropertyChanged(nameof(CanEditNotificationDetails));
         OnPropertyChanged(nameof(CanManagePremiumPreferences));
         OnPropertyChanged(nameof(CanEnablePremiumPreview));
+        OnPropertyChanged(nameof(CanDisablePremiumPreview));
         OnPropertyChanged(nameof(PremiumGateMessage));
         OnPropertyChanged(nameof(AccountStatus));
         OnPropertyChanged(nameof(ReminderSaveButtonText));

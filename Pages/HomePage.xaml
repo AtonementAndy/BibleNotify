@@ -3,6 +3,7 @@
     x:Class="BibleNotify.Pages.HomePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     xmlns:controls="clr-namespace:BibleNotify.Controls"
     xmlns:localization="clr-namespace:BibleNotify.Localization"
     xmlns:vm="clr-namespace:BibleNotify.ViewModels"
@@ -14,32 +15,29 @@
           Background="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}">
         <ScrollView Grid.Row="0">
         <Grid Padding="8,16,8,24" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="16">
-            <Grid>
-                <VerticalStackLayout Spacing="5">
-                    <Label
-                        Text="{Binding AccountLabel}"
-                        FontFamily="OpenSansSemibold"
-                        FontSize="14"
-                        CharacterSpacing="1"
-                        TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
-                    <Label
-                        Text="{Binding Greeting}"
-                        FontFamily="OpenSansSemibold"
-                        FontSize="24"
-                        LineHeight="1.1"
-                        TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
-                        SemanticProperties.HeadingLevel="Level1" />
-                </VerticalStackLayout>
-            </Grid>
+            <VerticalStackLayout Grid.Row="0" Spacing="5">
+                <Label
+                    Text="{Binding AccountLabel}"
+                    FontFamily="OpenSansSemibold"
+                    FontSize="14"
+                    CharacterSpacing="1"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                <Label
+                    Text="{Binding Greeting}"
+                    FontFamily="OpenSansSemibold"
+                    FontSize="24"
+                    LineHeight="1.1"
+                    MaxLines="3"
+                    LineBreakMode="WordWrap"
+                    TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
+                    SemanticProperties.HeadingLevel="Level1" />
+            </VerticalStackLayout>
 
-            <Border
+            <acrylic:AcrylicView
+                Style="{StaticResource AcrylicCard}"
                 Grid.Row="1"
                 IsVisible="{Binding ShowCreateAccount}"
-                Padding="18"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24">
+                Padding="18">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="4" VerticalOptions="Center">
                         <Label
@@ -61,58 +59,51 @@
                         FontSize="13"
                         SemanticProperties.Hint="{localization:Translate Key='Abre o cadastro de uma nova conta'}" />
                 </Grid>
-            </Border>
+            </acrylic:AcrylicView>
 
             <Border
                 Grid.Row="2"
-                IsVisible="{Binding ShowPremiumStreak}"
-                Padding="18"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 20">
-                <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
-                    <Label Text="🔥" FontSize="24" VerticalTextAlignment="Center" />
-                    <VerticalStackLayout Grid.Column="1" Spacing="2">
-                        <Label Text="{Binding ReadingStreakLabel}" FontFamily="OpenSansSemibold" FontSize="16" />
-                        <Label Text="{localization:Translate Key='Sua constância na Palavra'}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                    </VerticalStackLayout>
+                Style="{StaticResource ElevatedCard}"
+                Padding="18">
+                <Grid>
+                    <Grid
+                        ColumnDefinitions="44,*"
+                        ColumnSpacing="12"
+                        IsVisible="{Binding ShowPremiumStreak}">
+                        <Label Text="🔥" FontSize="24" VerticalTextAlignment="Center" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="{Binding ReadingStreakLabel}" FontFamily="OpenSansSemibold" FontSize="16" />
+                            <Label Text="{localization:Translate Key='Sua constância na Palavra'}" FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Grid
+                        ColumnDefinitions="*,Auto"
+                        ColumnSpacing="10"
+                        IsVisible="{Binding IsStreakLocked}">
+                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                            <Label Text="{localization:Translate Key='Sequência de leitura'}" FontFamily="OpenSansSemibold" FontSize="15" />
+                            <Label Text="{Binding StreakUpgradeMessage}" FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                        </VerticalStackLayout>
+                        <Button
+                            Grid.Column="1"
+                            Text="{localization:Translate Key='Premium'}"
+                            Command="{Binding UpgradeCommand}"
+                            Padding="12,8"
+                            MinimumHeightRequest="44"
+                            FontSize="12"
+                            Background="{StaticResource PrimaryGradient}"
+                            TextColor="{StaticResource OnPrimary}" />
+                    </Grid>
                 </Grid>
             </Border>
 
             <Border
-                Grid.Row="2"
-                IsVisible="{Binding IsStreakLocked}"
-                Padding="18"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 20">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                        <Label Text="{localization:Translate Key='Sequência de leitura'}" FontFamily="OpenSansSemibold" FontSize="15" />
-                        <Label Text="{Binding StreakUpgradeMessage}" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                    </VerticalStackLayout>
-                    <Button
-                        Grid.Column="1"
-                        Text="{localization:Translate Key='Premium'}"
-                        Command="{Binding UpgradeCommand}"
-                        Padding="12,8"
-                        MinimumHeightRequest="44"
-                        FontSize="12"
-                        Background="{StaticResource PrimaryGradient}"
-                        TextColor="{StaticResource OnPrimary}" />
-                </Grid>
-            </Border>
-
-            <Border
+                Style="{StaticResource ElevatedCard}"
                 Grid.Row="3"
                 IsVisible="{Binding ShowPremiumPlanCard}"
-                Padding="18"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24">
+                Padding="18">
                 <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="6">
                     <Label
                         Text="{localization:Translate Key='SUA JORNADA DE LEITURA'}"
@@ -185,31 +176,29 @@
             </Border>
 
             <Border
+                Style="{StaticResource ElevatedCard}"
                 Grid.Row="5"
-                Padding="18"
-                BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-                Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24">
+                Padding="18">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                    <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                    <VerticalStackLayout Spacing="4" VerticalOptions="Center"
+                                         Opacity="{Binding NotesPreviewOpacity}">
                         <Label
                             Text="{localization:Translate Key='Suas anotações'}"
                             FontFamily="OpenSansSemibold"
                             FontSize="16" />
                         <Label
-                            Text="{localization:Translate Key='Guarde reflexões e versículos importantes.'}"
+                            Text="{Binding NotesDescription}"
                             FontSize="13"
                             TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
                     </VerticalStackLayout>
                     <Button
                         Grid.Column="1"
-                        Text="{localization:Translate Key='Abrir'}"
+                        Text="{Binding NotesActionText}"
                         Command="{Binding OpenNotesCommand}"
                         Padding="16,10"
                         MinimumHeightRequest="44"
                         FontSize="13"
-                        SemanticProperties.Hint="{localization:Translate Key='Abre suas anotações bíblicas'}" />
+                        SemanticProperties.Hint="{Binding NotesActionHint}" />
                 </Grid>
             </Border>
 

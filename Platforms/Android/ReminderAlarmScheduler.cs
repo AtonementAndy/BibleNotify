@@ -18,7 +18,10 @@ internal static class ReminderAlarmScheduler
     private const string PreferencesName = "bible-notify-reminders";
     private const string ScheduledRemindersKey = "scheduled-reminders";
 
-    public static void Schedule(Context context, ScheduledReminder reminder)
+    public static void Schedule(
+        Context context,
+        ScheduledReminder reminder,
+        bool allowCurrentMinute = false)
     {
         var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager
             ?? throw new InvalidOperationException("Android alarm service is unavailable.");
@@ -30,8 +33,10 @@ internal static class ReminderAlarmScheduler
             PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable)
             ?? throw new InvalidOperationException("Could not create an Android reminder intent.");
 
-        var nextOccurrence = DateTime.Today.AddHours(reminder.Hour).AddMinutes(reminder.Minute);
-        if (nextOccurrence <= DateTime.Now)
+        var now = DateTime.Now;
+        var nextOccurrence = now.Date.AddHours(reminder.Hour).AddMinutes(reminder.Minute);
+        if (nextOccurrence <= now &&
+            (!allowCurrentMinute || nextOccurrence.AddMinutes(1) <= now))
         {
             nextOccurrence = nextOccurrence.AddDays(1);
         }

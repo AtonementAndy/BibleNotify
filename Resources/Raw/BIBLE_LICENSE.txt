@@ -12,3 +12,13 @@ da versão deve ser informada ao redistribuí-la.
 
 Esta edição foi convertida do formato VPL para um banco SQLite local. O texto
 dos versículos foi preservado; somente a estrutura de armazenamento mudou.
+
+Versão em inglês (consultada online, não empacotada):
+World English Bible (WEB), domínio público.
+API: https://bible-api.com/ (dados e licença: https://bible-api.com/data).
+
+As solicitações online enviam somente o identificador do livro e do capítulo
+(ou pedem um versículo aleatório); nenhum dado de conta, perfil ou anotação é
+incluído. O provedor informa que registra dados técnicos como endereço IP e URL
+por até 30 dias, limita o uso a 15 solicitações por 30 segundos e não garante
+disponibilidade. Consulte os termos e a política do provedor antes de publicar.

@@ -27,5 +27,8 @@ public partial class FloatingTabBar : ContentView
 
     private async void OnNotesTapped(object? sender, TappedEventArgs e) => await NavigateAsync("notes");
 
-    private async void OnSettingsTapped(object? sender, TappedEventArgs e) => await NavigateAsync("settings");
+    private async void OnSettingsTapped(object? sender, TappedEventArgs e) =>
+        await Shell.Current.GoToAsync(
+            "//main/settings",
+            new Dictionary<string, object> { ["section"] = "menu" });
 }

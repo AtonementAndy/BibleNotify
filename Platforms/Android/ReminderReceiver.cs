@@ -15,20 +15,10 @@ public sealed class ReminderReceiver : BroadcastReceiver
     public const string MessageKey = "reminder-message";
     public const string IsDefaultKey = "reminder-is-default";
     private const string ChannelId = "bible-reading";
-    private static readonly string[] ReadingInvitations =
-    [
-        "É hora de um momento com a Palavra de Deus.",
-        "Separe alguns minutos para ler a Bíblia.",
-        "A Palavra de Deus espera por você. Vamos ler?",
-        "Faça uma pausa e fortaleça sua fé com a Palavra.",
-        "Seu momento de leitura bíblica chegou.",
-        "Que tal renovar o coração com a Palavra de Deus?",
-        "Abra a Bíblia e reserve este momento para Deus."
-    ];
 
     public override void OnReceive(Context? context, Intent? intent)
     {
-        Localizer.ConfigureFromDeviceRegion();
+        Localizer.ConfigureFromDeviceLanguage();
         if (context is null || intent is null)
         {
             return;
@@ -75,12 +65,15 @@ public sealed class ReminderReceiver : BroadcastReceiver
         notificationBuilder.SetSmallIcon(global::Android.Resource.Drawable.IcDialogInfo);
         var isDefaultReminder = receiverIntent.GetBooleanExtra(IsDefaultKey, false);
         var reminderTitle = receiverIntent.GetStringExtra(TitleKey) ?? "BibleNotify";
-        notificationBuilder.SetContentTitle(
-            isDefaultReminder ? Localizer.Get(reminderTitle) : reminderTitle);
-        var message = isDefaultReminder
-            ? Localizer.Get(ReadingInvitations[Random.Shared.Next(ReadingInvitations.Length)])
-            : receiverIntent.GetStringExtra(MessageKey) ?? Localizer.Get("Um momento para a Palavra.");
-        notificationBuilder.SetContentText(message);
+        var reminderMessage = receiverIntent.GetStringExtra(MessageKey)
+            ?? Localizer.Get("Um momento para a Palavra.");
+        var notificationContent = Localizer.GetReminderNotification(
+            isDefaultReminder,
+            reminderTitle,
+            reminderMessage,
+            DateTime.Now);
+        notificationBuilder.SetContentTitle(notificationContent.Title);
+        notificationBuilder.SetContentText(notificationContent.Message);
         notificationBuilder.SetAutoCancel(true);
         notificationBuilder.SetPriority((int)NotificationPriority.Default);
         var launchIntent = new Intent(receiverContext, typeof(MainActivity))

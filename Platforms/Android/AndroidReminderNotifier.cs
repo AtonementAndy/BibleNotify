@@ -56,7 +56,7 @@ public sealed class AndroidReminderNotifier(IUserDataService userData) : IRemind
         }
 
         var reminders = await userData.GetRemindersAsync();
-        if (userData.CurrentUser?.IsPremiumPreview != true)
+        if (!userData.HasPremiumAccess)
         {
             reminders = reminders.Where(reminder => reminder.IsDefault).ToArray();
         }
@@ -82,7 +82,7 @@ public sealed class AndroidReminderNotifier(IUserDataService userData) : IRemind
                 reminder.Minute,
                 reminder.IsDefault);
             scheduledReminders.Add(scheduledReminder);
-            ReminderAlarmScheduler.Schedule(context, scheduledReminder);
+            ReminderAlarmScheduler.Schedule(context, scheduledReminder, allowCurrentMinute: true);
         }
 
         var staleIds = previousIds

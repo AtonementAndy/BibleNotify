@@ -82,14 +82,20 @@ public partial class LoginViewModel(
         ? Localizer.Get("Já tem uma conta? Entrar")
         : Localizer.Get("Ainda não tem conta? Criar conta");
 
-    public bool IsSigningIn => !IsRegistering;
+    public string PasswordPlaceholder => Localizer.Get(
+        IsRegistering ? "Senha (mín. 8 caracteres)" : "Senha");
+
+    public ReturnType PasswordReturnType => IsRegistering ? ReturnType.Next : ReturnType.Done;
 
     partial void OnIsRegisteringChanged(bool value)
     {
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
         ErrorMessage = null;
         OnPropertyChanged(nameof(SubmitButtonText));
         OnPropertyChanged(nameof(ModeSwitchText));
-        OnPropertyChanged(nameof(IsSigningIn));
+        OnPropertyChanged(nameof(PasswordPlaceholder));
+        OnPropertyChanged(nameof(PasswordReturnType));
     }
 
     [RelayCommand(CanExecute = nameof(CanSubmit))]
@@ -150,6 +156,8 @@ public partial class LoginViewModel(
         }
         finally
         {
+            Password = string.Empty;
+            ConfirmPassword = string.Empty;
             IsBusy = false;
         }
     }

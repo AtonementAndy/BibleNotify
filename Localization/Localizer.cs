@@ -53,6 +53,7 @@ public static class Localizer
             ["JON"] = "Jonah",
             ["MIC"] = "Micah",
             ["NAH"] = "Nahum",
+            ["NAM"] = "Nahum",
             ["HAB"] = "Habakkuk",
             ["ZEP"] = "Zephaniah",
             ["HAG"] = "Haggai",
@@ -62,6 +63,7 @@ public static class Localizer
             ["MRK"] = "Mark",
             ["LUK"] = "Luke",
             ["JOH"] = "John",
+            ["JHN"] = "John",
             ["ACT"] = "Acts",
             ["ROM"] = "Romans",
             ["1CO"] = "1 Corinthians",
@@ -87,32 +89,16 @@ public static class Localizer
             ["REV"] = "Revelation"
         };
 
-    public static void ConfigureFromDeviceRegion()
+    public static void ConfigureFromDeviceLanguage()
     {
-        string? deviceCountry = null;
-        try
+        var deviceLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        if (string.IsNullOrWhiteSpace(deviceLanguage) || deviceLanguage == "iv")
         {
-            deviceCountry = RegionInfo.CurrentRegion.TwoLetterISORegionName;
-        }
-        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
-        {
-            var deviceLocale = CultureInfo.CurrentCulture.Name;
-            if (!string.IsNullOrWhiteSpace(deviceLocale))
-            {
-                try
-                {
-                    deviceCountry = new RegionInfo(deviceLocale).TwoLetterISORegionName;
-                }
-                catch (ArgumentException)
-                {
-                }
-            }
+            deviceLanguage = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
         }
 
         var culture = CultureInfo.GetCultureInfo(
-            string.Equals(deviceCountry, "BR", StringComparison.OrdinalIgnoreCase)
-                ? "pt-BR"
-                : "en-US");
+            deviceLanguage.Equals("pt", StringComparison.OrdinalIgnoreCase) ? "pt-BR" : "en-US");
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentCulture = culture;
@@ -164,6 +150,7 @@ public static class Localizer
             ["Guarde reflexões e versículos importantes."] = "Save reflections and meaningful verses.",
             ["Abrir"] = "Open",
             ["Abre suas anotações bíblicas"] = "Opens your Bible notes",
+            ["Abre as opções Premium"] = "Opens Premium options",
             ["Início"] = "Home",
             ["Notas"] = "Notes",
             ["Bíblia"] = "Bible",
@@ -172,16 +159,27 @@ public static class Localizer
             ["Capítulo"] = "Chapter",
             ["Selecione um livro da Bíblia"] = "Select a book of the Bible",
             ["Selecione o capítulo"] = "Select the chapter",
-            ["Bíblia Livre · leitura offline"] = "Free Bible · offline reading",
+            ["Bíblia Livre · leitura offline"] = "World English Bible (WEB) · bible-api.com · Public Domain",
             ["Abrindo capítulo..."] = "Opening chapter...",
             ["Anterior"] = "Previous",
             ["Próximo"] = "Next",
             ["Constância, um dia de cada vez."] = "Consistency, one day at a time.",
             ["Acompanhe uma jornada guiada pela Bíblia."] = "Follow a guided journey through the Bible.",
             ["ESCOLHA UM PLANO"] = "CHOOSE A PLAN",
+            ["PLANOS DE LEITURA"] = "READING PLANS",
+            ["Escolha uma jornada para conhecer os livros, a duração e o foco de cada plano."] = "Choose a journey to explore the books, duration, and focus of each plan.",
+            ["Toque para selecionar este plano"] = "Tap to select this plan",
+            ["Toque para ver os recursos Premium"] = "Tap to view Premium options",
+            ["Selecionado"] = "Selected",
+            ["Nenhum plano de leitura disponível no momento."] = "No reading plans are available right now.",
+            ["SUA JORNADA"] = "YOUR JOURNEY",
+            ["ESCOLHA OUTRO PLANO"] = "CHOOSE ANOTHER PLAN",
+            ["Seu plano ainda não começou."] = "Your plan has not started yet.",
+            ["Toque em Iniciar plano para ver as leituras diárias."] = "Tap Start plan to see your daily readings.",
+            ["Inicie o plano para ver as leituras diárias."] = "Start the plan to see your daily readings.",
             ["{0} dias"] = "{0} days",
-            ["{0} · Bíblia Livre"] = "{0} · Free Bible",
-            ["{0} {1}:{2} · Bíblia Livre"] = "{0} {1}:{2} · Free Bible",
+            ["{0} · Bíblia Livre"] = "{0} · World English Bible (WEB)",
+            ["{0} {1}:{2} · Bíblia Livre"] = "{0} {1}:{2} · World English Bible (WEB)",
             ["Dia {0}"] = "Day {0}",
             ["🔒 PLANOS E PROGRESSO PREMIUM"] = "🔒 PREMIUM PLANS AND PROGRESS",
             ["Conheça os formatos abaixo. Para iniciar um plano, acompanhar leituras e salvar seu progresso, é necessário o Premium."] = "Explore the plans below. Premium is required to start a plan, track readings, and save your progress.",
@@ -217,6 +215,10 @@ public static class Localizer
             ["Tema inválido."] = "Invalid theme.",
             ["Entre ou crie uma conta para acessar este recurso."] = "Sign in or create an account to access this feature.",
             ["A senha deve ter pelo menos 8 caracteres."] = "The password must be at least 8 characters long.",
+            ["A senha deve ter entre 8 e 1024 caracteres."] = "The password must be between 8 and 1024 characters.",
+            ["Confira o tamanho dos dados de perfil."] = "Check the lengths of the profile details.",
+            ["A anotação deve ter entre 1 e 10000 caracteres."] = "The note must be between 1 and 10,000 characters.",
+            ["O título deve ter até 100 caracteres e a mensagem até 1000."] = "The title must be at most 100 characters and the message at most 1,000.",
             ["É hora de um momento com a Palavra de Deus."] = "It's time for a moment with the Word of God.",
             ["Separe alguns minutos para ler a Bíblia."] = "Set aside a few minutes to read the Bible.",
             ["A Palavra de Deus espera por você. Vamos ler?"] = "The Word of God is waiting for you. Shall we read?",
@@ -292,7 +294,6 @@ public static class Localizer
             ["Não foi possível carregar os dados. Tente novamente."] = "Could not load the data. Try again.",
             ["Que bom ter você por aqui!"] = "It's good to have you here!",
             ["Que bom ver você novamente."] = "It's good to see you again.",
-            ["Olá, {0} {1}, que bom ter você por aqui."] = "Hello, {0} {1}, it's good to have you here.",
             ["Modo visitante"] = "Guest mode",
             ["Visitante"] = "Guest",
             ["Acompanhe seus dias consecutivos com uma conta Premium."] = "Track your consecutive days with a Premium account.",
@@ -307,6 +308,9 @@ public static class Localizer
             ["🔒 Disponível no Premium"] = "🔒 Available with Premium",
             ["Continuar plano"] = "Continue plan",
             ["Iniciar plano"] = "Start plan",
+            ["Usar este plano"] = "Use this plan",
+            ["Plano {0} selecionado. Toque em {1} para prosseguir."] = "Plan {0} selected. Tap {1} to continue.",
+            ["Plano {0} iniciado! Suas leituras estão prontas abaixo."] = "Plan {0} started! Your readings are ready below.",
             ["Criar conta e conhecer o Premium"] = "Create an account and explore Premium",
             ["Ver prévia Premium"] = "View Premium preview",
             ["Este recurso é exclusivo do Premium. Veja os planos e crie uma conta para continuar."] = "This feature is exclusive to Premium. Explore the plans and create an account to continue.",
@@ -315,6 +319,10 @@ public static class Localizer
             ["Suas anotações aparecerão aqui."] = "Your notes will appear here.",
             ["🔒 Salvar anotação · Premium"] = "🔒 Save note · Premium",
             ["Salvar anotação"] = "Save note",
+            ["Salvar alterações"] = "Save changes",
+            ["EDITANDO ANOTAÇÃO"] = "EDITING NOTE",
+            ["Cancelar edição"] = "Cancel editing",
+            ["Você não tem permissão para editar esta anotação."] = "You do not have permission to edit this note.",
             ["Não foi possível carregar as anotações. Tente novamente."] = "Could not load notes. Try again.",
             ["Não foi possível carregar a Bíblia offline."] = "Could not load the offline Bible.",
             ["Escolha uma referência e escreva sua anotação."] = "Choose a reference and write your note.",
@@ -341,6 +349,10 @@ public static class Localizer
             ["Não foi possível salvar o perfil."] = "Could not save the profile.",
             ["Prévia Premium ativada neste aparelho. Nenhuma compra ou cobrança foi realizada."] = "Premium preview enabled on this device. No purchase was made and no charge was made.",
             ["Prévia Premium desativada."] = "Premium preview disabled.",
+            ["A prévia Premium só fica disponível em compilações de desenvolvimento."] = "The Premium preview is only available in development builds.",
+            ["Dia inválido para o plano ativo."] = "Invalid day for the active plan.",
+            ["Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente."] = "Could not load the online Bible. Check your connection and try again.",
+            ["O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde."] = "The Bible service returned invalid data. Please try again later.",
             ["Não foi possível atualizar o nível da conta."] = "Could not update the account level.",
             ["O nível da conta foi atualizado, mas não foi possível atualizar os lembretes."] = "The account level was updated, but reminders could not be refreshed.",
             ["Tema atualizado."] = "Theme updated.",
@@ -470,6 +482,209 @@ public static class Localizer
 
         return English.GetValueOrDefault(role, role);
     }
+
+    public static string GetWelcomeGreeting(
+        bool isFirstLogin,
+        string fullName,
+        string ministryRole,
+        DateTime localTime)
+    {
+        var timeOfDay = localTime.Hour switch
+        {
+            < 10 => 0,
+            < 12 => 1,
+            < 18 => 2,
+            _ => 3
+        };
+        var messages = (IsPortuguese, isFirstLogin) switch
+        {
+            (true, true) => PortugueseFirstWelcomeMessages[timeOfDay],
+            (true, false) => PortugueseReturningWelcomeMessages[timeOfDay],
+            (false, true) => EnglishFirstWelcomeMessages[timeOfDay],
+            _ => EnglishReturningWelcomeMessages[timeOfDay]
+        };
+        var message = messages[Random.Shared.Next(messages.Length)];
+        return string.Format(CultureInfo.CurrentCulture, message, fullName, ministryRole);
+    }
+
+    public static (string Title, string Message) GetReminderNotification(
+        bool isDefault,
+        string title,
+        string message,
+        DateTime localTime)
+    {
+        if (!isDefault)
+        {
+            return (title, message);
+        }
+
+        var timeOfDay = localTime.Hour switch
+        {
+            < 11 => 0,
+            < 12 => 1,
+            < 18 => 2,
+            _ => 3
+        };
+        var options = IsPortuguese
+            ? PortugueseReminderMessages[timeOfDay]
+            : EnglishReminderMessages[timeOfDay];
+        var selected = options[Random.Shared.Next(options.Length)];
+        return (selected.Title, selected.Message);
+    }
+
+    private static readonly ReminderContent[][] PortugueseReminderMessages =
+    [
+        [
+            new("Momento da manhã", "Comece o dia com alguns minutos na Palavra."),
+            new("Uma pausa com Deus", "Que a Palavra ilumine o seu começo de dia."),
+            new("Leitura da manhã", "Reserve um tempo nesta manhã para estar com Deus."),
+            new("Bom dia com a Palavra", "Abra a Bíblia e leve uma boa palavra para o seu dia.")
+        ],
+        [
+            new("Um momento com a Palavra", "Faça uma pausa e encontre inspiração na Bíblia."),
+            new("Pausa para refletir", "Que tal alguns minutos de leitura e reflexão?"),
+            new("Seu momento de leitura", "A Palavra de Deus tem um lugar no seu dia."),
+            new("Uma pausa abençoada", "Respire fundo e separe um instante para a Palavra.")
+        ],
+        [
+            new("Momento da tarde", "Faça uma pausa nesta tarde para estar com a Palavra."),
+            new("Reflexão da tarde", "Renove suas forças com alguns minutos de leitura."),
+            new("Uma pausa com Deus", "Encontre um momento de paz na Palavra nesta tarde."),
+            new("Leitura para a tarde", "Abra a Bíblia e reserve este momento para Deus.")
+        ],
+        [
+            new("Momento da noite", "Encerre o dia com alguns minutos na Palavra."),
+            new("Reflexão da noite", "Acalme o coração com uma leitura bíblica."),
+            new("Uma pausa com Deus", "Que a Palavra acompanhe você nesta noite."),
+            new("Leitura para a noite", "Separe um momento tranquilo para estar com Deus.")
+        ]
+    ];
+
+    private static readonly ReminderContent[][] EnglishReminderMessages =
+    [
+        [
+            new("Morning with the Word", "Start your day with a few minutes in Scripture."),
+            new("A moment with God", "Let the Word bring light to the start of your day."),
+            new("Morning reading", "Set aside a little time to be with God this morning."),
+            new("Good morning", "Open your Bible and carry a hopeful word into your day.")
+        ],
+        [
+            new("A moment with the Word", "Take a pause and find inspiration in the Bible."),
+            new("A moment to reflect", "How about a few minutes of reading and reflection?"),
+            new("Your reading moment", "Make room for the Word in your day."),
+            new("A peaceful pause", "Take a breath and set aside a moment for Scripture.")
+        ],
+        [
+            new("Afternoon reading", "Take a pause to spend a moment with the Word."),
+            new("Afternoon reflection", "Find renewed strength in a few minutes of reading."),
+            new("A moment with God", "Find a little peace in the Word this afternoon."),
+            new("A pause for Scripture", "Open your Bible and set aside this moment for God.")
+        ],
+        [
+            new("Evening with the Word", "End your day with a few minutes in Scripture."),
+            new("Evening reflection", "Quiet your heart with a little Bible reading."),
+            new("A moment with God", "May the Word be with you this evening."),
+            new("A peaceful evening", "Set aside a quiet moment to spend with God.")
+        ]
+    ];
+
+    private sealed record ReminderContent(string Title, string Message);
+
+    private static readonly string[][] PortugueseFirstWelcomeMessages =
+    [
+        [
+            "É bom ter você aqui nesta manhã, {0} ({1})!",
+            "Que alegria receber você nesta manhã, {0} ({1})!",
+            "Que sua manhã seja abençoada, {0} ({1})!"
+        ],
+        [
+            "É muito bom ter você aqui, {0} ({1})!",
+            "Que alegria receber você por aqui, {0} ({1})!",
+            "Este espaço também é seu, {0} ({1})!"
+        ],
+        [
+            "É bom ter você aqui nesta tarde, {0} ({1})!",
+            "Uma tarde abençoada para você, {0} ({1})!",
+            "Que alegria receber você nesta tarde, {0} ({1})!"
+        ],
+        [
+            "É bom ter você aqui nesta noite, {0} ({1})!",
+            "Que sua noite seja abençoada, {0} ({1})!",
+            "Que alegria receber você nesta noite, {0} ({1})!"
+        ]
+    ];
+
+    private static readonly string[][] PortugueseReturningWelcomeMessages =
+    [
+        [
+            "Que bom ter você de volta nesta manhã, {0} ({1})!",
+            "Uma manhã abençoada para você, {0} ({1})!",
+            "Que alegria começar o dia com você de volta, {0} ({1})!"
+        ],
+        [
+            "Que bom ter você de volta, {0} ({1})!",
+            "Sentimos sua falta por aqui, {0} ({1})!",
+            "Que bom continuar esta jornada com você, {0} ({1})!"
+        ],
+        [
+            "Que bom ter você de volta nesta tarde, {0} ({1})!",
+            "Uma tarde abençoada para você, {0} ({1})!",
+            "Que alegria ter você de volta nesta tarde, {0} ({1})!"
+        ],
+        [
+            "Que bom ter você de volta nesta noite, {0} ({1})!",
+            "Uma noite abençoada para você, {0} ({1})!",
+            "Que alegria ter você de volta nesta noite, {0} ({1})!"
+        ]
+    ];
+
+    private static readonly string[][] EnglishFirstWelcomeMessages =
+    [
+        [
+            "It's good to have you here this morning, {0} ({1})!",
+            "What a joy to welcome you this morning, {0} ({1})!",
+            "May your morning be blessed, {0} ({1})!"
+        ],
+        [
+            "It's great to have you here, {0} ({1})!",
+            "What a joy to welcome you, {0} ({1})!",
+            "Make yourself at home, {0} ({1})!"
+        ],
+        [
+            "It's good to have you here this afternoon, {0} ({1})!",
+            "Wishing you a blessed afternoon, {0} ({1})!",
+            "What a joy to welcome you this afternoon, {0} ({1})!"
+        ],
+        [
+            "It's good to have you here this evening, {0} ({1})!",
+            "May your evening be blessed, {0} ({1})!",
+            "What a joy to welcome you this evening, {0} ({1})!"
+        ]
+    ];
+
+    private static readonly string[][] EnglishReturningWelcomeMessages =
+    [
+        [
+            "It's good to have you back this morning, {0} ({1})!",
+            "Wishing you a blessed morning, {0} ({1})!",
+            "What a joy to start the day with you back, {0} ({1})!"
+        ],
+        [
+            "It's great to have you back, {0} ({1})!",
+            "We missed having you here, {0} ({1})!",
+            "It's good to continue this journey with you, {0} ({1})!"
+        ],
+        [
+            "It's good to have you back this afternoon, {0} ({1})!",
+            "Wishing you a blessed afternoon, {0} ({1})!",
+            "What a joy to have you back this afternoon, {0} ({1})!"
+        ],
+        [
+            "It's good to have you back this evening, {0} ({1})!",
+            "Wishing you a blessed evening, {0} ({1})!",
+            "What a joy to have you back this evening, {0} ({1})!"
+        ]
+    ];
 
     public static string Format(string portugueseFormat, params object?[] arguments) =>
         string.Format(CultureInfo.CurrentCulture, Get(portugueseFormat), arguments);

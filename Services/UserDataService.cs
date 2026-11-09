@@ -14,11 +14,24 @@ public sealed class UserDataService(
     private const int PasswordIterations = 600_000;
     private const int SaltSize = 16;
     private const int HashSize = 32;
+    private const int MaximumPasswordLength = 1024;
+    private const int MaximumEmailLength = 254;
+    private const int MaximumNameLength = 100;
+    private const int MaximumMinistryRoleLength = 100;
+    private const int MaximumPhoneLength = 32;
+    private const int MaximumNoteLength = 10_000;
+    private const int MaximumReminderTitleLength = 100;
+    private const int MaximumReminderMessageLength = 1000;
     private static readonly string DatabasePath = Path.Combine(FileSystem.AppDataDirectory, "user-data.db");
-    private static readonly (string Title, string Message, int Hour, int Minute)[] DefaultReminders =
+    private static readonly (string Title, string Message, int Hour, int Minute)[] PortugueseDefaultReminders =
     [
         ("Momento da manhã", "Comece o dia com alguns minutos na Palavra.", 8, 0),
         ("Pausa para refletir", "Reserve um instante para ler a Bíblia.", 18, 0)
+    ];
+    private static readonly (string Title, string Message, int Hour, int Minute)[] EnglishDefaultReminders =
+    [
+        ("Morning reflection", "Start your day with a few minutes in the Word.", 8, 0),
+        ("Time to reflect", "Set aside a moment to read the Bible.", 18, 0)
     ];
     private readonly SemaphoreSlim _initializationGate = new(1, 1);
     private bool _initialized;
@@ -27,7 +40,21 @@ public sealed class UserDataService(
 
     public UserProfile? CurrentUser { get; private set; }
 
+    public bool HasPremiumAccess
+    {
+        get
+        {
+#if DEBUG
+            return CurrentUser?.IsPremiumPreview == true;
+#else
+            return false;
+#endif
+        }
+    }
+
     public bool IsGuestSession { get; private set; }
+
+    public bool IsFirstLoginInSession { get; private set; }
 
     public async Task RegisterAsync(
         AccountRegistration registration,
@@ -71,6 +98,7 @@ public sealed class UserDataService(
 
         CurrentUser = await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
         IsGuestSession = false;
+        IsFirstLoginInSession = true;
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -79,7 +107,10 @@ public sealed class UserDataService(
         string password,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password))
+        if (string.IsNullOrWhiteSpace(email) ||
+            email.Length > MaximumEmailLength ||
+            string.IsNullOrEmpty(password) ||
+            password.Length > MaximumPasswordLength)
         {
             return false;
         }
@@ -117,8 +148,10 @@ public sealed class UserDataService(
             return false;
         }
 
-        CurrentUser = await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        var user = await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        CurrentUser = user;
         IsGuestSession = false;
+        IsFirstLoginInSession = !user.HasSeenWelcome;
         SessionChanged?.Invoke(this, EventArgs.Empty);
         return true;
     }
@@ -128,6 +161,7 @@ public sealed class UserDataService(
         cancellationToken.ThrowIfCancellationRequested();
         CurrentUser = null;
         IsGuestSession = true;
+        IsFirstLoginInSession = false;
         SessionChanged?.Invoke(this, EventArgs.Empty);
         return Task.CompletedTask;
     }
@@ -137,12 +171,35 @@ public sealed class UserDataService(
         cancellationToken.ThrowIfCancellationRequested();
         CurrentUser = null;
         IsGuestSession = false;
+        IsFirstLoginInSession = false;
         SessionChanged?.Invoke(this, EventArgs.Empty);
         return Task.CompletedTask;
     }
 
+    public async Task MarkWelcomeSeenAsync(CancellationToken cancellationToken = default)
+    {
+        var user = RequireAccount();
+        if (user.HasSeenWelcome)
+        {
+            IsFirstLoginInSession = false;
+            return;
+        }
+
+        await ExecuteUserCommandAsync(
+            "UPDATE Users SET HasSeenWelcome = 1 WHERE UserId = $userId;",
+            cancellationToken,
+            ("$userId", user.UserId)).ConfigureAwait(false);
+        CurrentUser = user with { HasSeenWelcome = true };
+        IsFirstLoginInSession = false;
+    }
+
     public async Task SetPremiumPreviewAsync(bool enabled, CancellationToken cancellationToken = default)
     {
+#if !DEBUG
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new UnauthorizedAccessException(
+            Localizer.Get("A prévia Premium só fica disponível em compilações de desenvolvimento."));
+#else
         var user = RequireAccount();
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
@@ -162,9 +219,10 @@ public sealed class UserDataService(
             countCommand.CommandText = "SELECT COUNT(*) FROM Reminders WHERE UserId = $userId AND IsDefault = 1;";
             countCommand.Parameters.AddWithValue("$userId", user.UserId);
             var defaultCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false));
-            foreach (var reminder in DefaultReminders)
+            var defaultReminders = GetDefaultReminders();
+            foreach (var reminder in defaultReminders)
             {
-                if (defaultCount >= DefaultReminders.Length)
+                if (defaultCount >= defaultReminders.Length)
                 {
                     break;
                 }
@@ -176,8 +234,8 @@ public sealed class UserDataService(
                     VALUES ($userId, $title, $message, $hour, $minute, 1, 1);
                     """;
                 insertCommand.Parameters.AddWithValue("$userId", user.UserId);
-                insertCommand.Parameters.AddWithValue("$title", Localizer.Get(reminder.Title));
-                insertCommand.Parameters.AddWithValue("$message", Localizer.Get(reminder.Message));
+                insertCommand.Parameters.AddWithValue("$title", reminder.Title);
+                insertCommand.Parameters.AddWithValue("$message", reminder.Message);
                 insertCommand.Parameters.AddWithValue("$hour", reminder.Hour);
                 insertCommand.Parameters.AddWithValue("$minute", reminder.Minute);
                 await insertCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -188,6 +246,7 @@ public sealed class UserDataService(
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         CurrentUser = user with { IsPremiumPreview = enabled };
         SessionChanged?.Invoke(this, EventArgs.Empty);
+#endif
     }
 
     public async Task UpdateProfileAsync(
@@ -198,12 +257,7 @@ public sealed class UserDataService(
         CancellationToken cancellationToken = default)
     {
         var user = RequireAccount();
-        if (string.IsNullOrWhiteSpace(firstName) ||
-            string.IsNullOrWhiteSpace(lastName) ||
-            string.IsNullOrWhiteSpace(ministryRole))
-        {
-            throw new ArgumentException(Localizer.Get("Nome, sobrenome e função ministerial são obrigatórios."));
-        }
+        ValidateProfile(firstName, lastName, ministryRole, phone);
 
         await ExecuteUserCommandAsync(
             """
@@ -215,7 +269,7 @@ public sealed class UserDataService(
             ("$firstName", firstName.Trim()),
             ("$lastName", lastName.Trim()),
             ("$ministryRole", ministryRole.Trim()),
-            ("$phone", phone.Trim()),
+            ("$phone", phone?.Trim() ?? string.Empty),
             ("$userId", user.UserId)).ConfigureAwait(false);
 
         CurrentUser = user with
@@ -223,7 +277,7 @@ public sealed class UserDataService(
             FirstName = firstName.Trim(),
             LastName = lastName.Trim(),
             MinistryRole = ministryRole.Trim(),
-            Phone = phone.Trim()
+            Phone = phone?.Trim() ?? string.Empty
         };
         SessionChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -400,7 +454,7 @@ public sealed class UserDataService(
     public async Task<IReadOnlyList<PlanDay>> GetCurrentPlanDaysAsync(
         CancellationToken cancellationToken = default)
     {
-        var user = RequireAccount();
+        var user = RequirePremium();
         var bookNames = (await bibleLibrary.GetBooksAsync(cancellationToken).ConfigureAwait(false))
             .ToDictionary(book => book.BookId, book => book.Name);
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -516,10 +570,7 @@ public sealed class UserDataService(
         CancellationToken cancellationToken = default)
     {
         var user = RequirePremium();
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            throw new ArgumentException(Localizer.Get("A anotação não pode ficar vazia."), nameof(text));
-        }
+        ValidateNoteText(text);
 
         await ExecuteUserCommandAsync(
             """
@@ -533,6 +584,39 @@ public sealed class UserDataService(
             ("$verse", verse),
             ("$text", text.Trim()),
             ("$updatedAt", DateTimeOffset.UtcNow.ToString("O"))).ConfigureAwait(false);
+    }
+
+    public async Task UpdateNoteAsync(
+        int noteId,
+        int bookId,
+        int chapter,
+        int verse,
+        string text,
+        CancellationToken cancellationToken = default)
+    {
+        var user = RequirePremium();
+        ValidateNoteText(text);
+
+        await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE Notes
+            SET BookId = $bookId, Chapter = $chapter, Verse = $verse,
+                Text = $text, UpdatedAt = $updatedAt
+            WHERE NoteId = $noteId AND UserId = $userId;
+            """;
+        command.Parameters.AddWithValue("$bookId", bookId);
+        command.Parameters.AddWithValue("$chapter", chapter);
+        command.Parameters.AddWithValue("$verse", verse);
+        command.Parameters.AddWithValue("$text", text.Trim());
+        command.Parameters.AddWithValue("$updatedAt", DateTimeOffset.UtcNow.ToString("O"));
+        command.Parameters.AddWithValue("$noteId", noteId);
+        command.Parameters.AddWithValue("$userId", user.UserId);
+
+        if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+        {
+            throw new UnauthorizedAccessException(Localizer.Get("Você não tem permissão para editar esta anotação."));
+        }
     }
 
     public async Task DeleteNoteAsync(int noteId, CancellationToken cancellationToken = default)
@@ -555,7 +639,7 @@ public sealed class UserDataService(
             SELECT ReminderId, Title, Message, Hour, Minute, IsEnabled, IsDefault
             FROM Reminders
             WHERE UserId = $userId
-            ORDER BY IsDefault DESC, Hour, Minute;
+            ORDER BY Hour, Minute, ReminderId;
             """;
         command.Parameters.AddWithValue("$userId", user.UserId);
 
@@ -563,14 +647,14 @@ public sealed class UserDataService(
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            reminders.Add(new PrayerReminder(
+            reminders.Add(LocalizeDefaultReminder(new PrayerReminder(
                 reader.GetInt32(0),
                 reader.GetString(1),
                 reader.GetString(2),
                 reader.GetInt32(3),
                 reader.GetInt32(4),
                 reader.GetInt32(5) == 1,
-                reader.GetInt32(6) == 1));
+                reader.GetInt32(6) == 1)));
         }
 
         return reminders;
@@ -689,6 +773,7 @@ public sealed class UserDataService(
                     MinistryRole TEXT NOT NULL,
                     Phone TEXT NOT NULL DEFAULT '',
                     IsPremiumPreview INTEGER NOT NULL DEFAULT 0,
+                    HasSeenWelcome INTEGER NOT NULL DEFAULT 0,
                     Theme TEXT NOT NULL DEFAULT 'System',
                     Language TEXT NOT NULL DEFAULT 'pt-BR',
                     CreatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -763,6 +848,7 @@ public sealed class UserDataService(
                 WHERE PlanId = 3;
                 """;
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await EnsureWelcomeColumnAsync(connection, cancellationToken).ConfigureAwait(false);
             _initialized = true;
             logger.LogInformation("Local account database initialized.");
         }
@@ -777,7 +863,7 @@ public sealed class UserDataService(
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT UserId, FirstName, LastName, MinistryRole, Phone, Email, IsPremiumPreview, Theme, Language
+            SELECT UserId, FirstName, LastName, MinistryRole, Phone, Email, IsPremiumPreview, Theme, Language, HasSeenWelcome
             FROM Users
             WHERE UserId = $userId;
             """;
@@ -797,7 +883,38 @@ public sealed class UserDataService(
             reader.GetString(5),
             reader.GetInt32(6) == 1,
             reader.GetString(7),
-            reader.GetString(8));
+            reader.GetString(8),
+            reader.GetInt32(9) == 1);
+    }
+
+    private static async Task EnsureWelcomeColumnAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        var hasWelcomeColumn = false;
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info(Users);";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                if (string.Equals(reader.GetString(1), "HasSeenWelcome", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasWelcomeColumn = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasWelcomeColumn)
+        {
+            return;
+        }
+
+        await using var migration = connection.CreateCommand();
+        migration.CommandText =
+            "ALTER TABLE Users ADD COLUMN HasSeenWelcome INTEGER NOT NULL DEFAULT 1;";
+        await migration.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken)
@@ -836,7 +953,7 @@ public sealed class UserDataService(
         int userId,
         CancellationToken cancellationToken)
     {
-        foreach (var reminder in DefaultReminders)
+        foreach (var reminder in GetDefaultReminders())
         {
             await using var command = connection.CreateCommand();
             command.Transaction = transaction;
@@ -845,12 +962,45 @@ public sealed class UserDataService(
                 VALUES ($userId, $title, $message, $hour, $minute, 1, 1);
                 """;
             command.Parameters.AddWithValue("$userId", userId);
-            command.Parameters.AddWithValue("$title", Localizer.Get(reminder.Item1));
-            command.Parameters.AddWithValue("$message", Localizer.Get(reminder.Item2));
-            command.Parameters.AddWithValue("$hour", reminder.Item3);
-            command.Parameters.AddWithValue("$minute", reminder.Item4);
+            command.Parameters.AddWithValue("$title", reminder.Title);
+            command.Parameters.AddWithValue("$message", reminder.Message);
+            command.Parameters.AddWithValue("$hour", reminder.Hour);
+            command.Parameters.AddWithValue("$minute", reminder.Minute);
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    private static (string Title, string Message, int Hour, int Minute)[] GetDefaultReminders() =>
+        Localizer.IsPortuguese ? PortugueseDefaultReminders : EnglishDefaultReminders;
+
+    private static PrayerReminder LocalizeDefaultReminder(PrayerReminder reminder)
+    {
+        if (!reminder.IsDefault)
+        {
+            return reminder;
+        }
+
+        var currentDefaults = GetDefaultReminders();
+        for (var index = 0; index < currentDefaults.Length; index++)
+        {
+            var portuguese = PortugueseDefaultReminders[index];
+            var english = EnglishDefaultReminders[index];
+            var previouslyLocalizedEnglish =
+                (Title: Localizer.Get(portuguese.Title), Message: Localizer.Get(portuguese.Message));
+            if ((reminder.Title == portuguese.Title && reminder.Message == portuguese.Message) ||
+                (reminder.Title == english.Title && reminder.Message == english.Message) ||
+                (reminder.Title == previouslyLocalizedEnglish.Title &&
+                 reminder.Message == previouslyLocalizedEnglish.Message))
+            {
+                return reminder with
+                {
+                    Title = currentDefaults[index].Title,
+                    Message = currentDefaults[index].Message
+                };
+            }
+        }
+
+        return reminder;
     }
 
     private static List<(int Day, int BookId, int Chapter)> BuildPlanEntries(
@@ -1000,13 +1150,15 @@ public sealed class UserDataService(
     private UserProfile RequirePremium()
     {
         var user = RequireAccount();
-        return user.IsPremiumPreview
+        return HasPremiumAccess
             ? user
             : throw new UnauthorizedAccessException(Localizer.Get("Este recurso está disponível no Premium."));
     }
 
     private static void ValidateRegistration(AccountRegistration registration)
     {
+        ArgumentNullException.ThrowIfNull(registration);
+
         if (string.IsNullOrWhiteSpace(registration.FirstName) ||
             string.IsNullOrWhiteSpace(registration.LastName) ||
             string.IsNullOrWhiteSpace(registration.MinistryRole))
@@ -1014,19 +1166,39 @@ public sealed class UserDataService(
             throw new ArgumentException(Localizer.Get("Preencha nome, sobrenome e função no corpo de Cristo."));
         }
 
-        if (!System.Net.Mail.MailAddress.TryCreate(registration.Email, out var address) ||
+        if (registration.FirstName.Trim().Length > MaximumNameLength ||
+            registration.LastName.Trim().Length > MaximumNameLength ||
+            registration.MinistryRole.Trim().Length > MaximumMinistryRoleLength ||
+            (registration.Phone?.Trim().Length ?? 0) > MaximumPhoneLength)
+        {
+            throw new ArgumentException(Localizer.Get("Confira o tamanho dos dados de perfil."));
+        }
+
+        if (string.IsNullOrWhiteSpace(registration.Email) ||
+            registration.Email.Trim().Length > MaximumEmailLength ||
+            !System.Net.Mail.MailAddress.TryCreate(registration.Email, out var address) ||
             !string.Equals(address.Address, registration.Email.Trim(), StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException(Localizer.Get("Digite um e-mail válido."));
         }
 
-        if (registration.Password.Length < 8)
+        if (string.IsNullOrEmpty(registration.Password) ||
+            registration.Password.Length < 8 ||
+            registration.Password.Length > MaximumPasswordLength)
         {
-            throw new ArgumentException(Localizer.Get("A senha deve ter pelo menos 8 caracteres."));
+            throw new ArgumentException(Localizer.Get("A senha deve ter entre 8 e 1024 caracteres."));
         }
     }
 
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+
+    private static void ValidateNoteText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text.Trim().Length > MaximumNoteLength)
+        {
+            throw new ArgumentException(Localizer.Get("A anotação deve ter entre 1 e 10000 caracteres."), nameof(text));
+        }
+    }
 
     private static void ValidateReminder(string title, string message, TimeSpan time)
     {
@@ -1035,7 +1207,31 @@ public sealed class UserDataService(
             throw new ArgumentException(Localizer.Get("Informe um título e uma mensagem para o lembrete."));
         }
 
+        if (title.Trim().Length > MaximumReminderTitleLength ||
+            message.Trim().Length > MaximumReminderMessageLength)
+        {
+            throw new ArgumentException(Localizer.Get("O título deve ter até 100 caracteres e a mensagem até 1000."));
+        }
+
         ValidateTime(time);
+    }
+
+    private static void ValidateProfile(string firstName, string lastName, string ministryRole, string phone)
+    {
+        if (string.IsNullOrWhiteSpace(firstName) ||
+            string.IsNullOrWhiteSpace(lastName) ||
+            string.IsNullOrWhiteSpace(ministryRole))
+        {
+            throw new ArgumentException(Localizer.Get("Nome, sobrenome e função ministerial são obrigatórios."));
+        }
+
+        if (firstName.Trim().Length > MaximumNameLength ||
+            lastName.Trim().Length > MaximumNameLength ||
+            ministryRole.Trim().Length > MaximumMinistryRoleLength ||
+            (phone?.Trim().Length ?? 0) > MaximumPhoneLength)
+        {
+            throw new ArgumentException(Localizer.Get("Confira o tamanho dos dados de perfil."));
+        }
     }
 
     private static void ValidateTime(TimeSpan time)

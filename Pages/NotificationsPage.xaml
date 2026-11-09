@@ -3,6 +3,7 @@
     x:Class="BibleNotify.Pages.NotificationsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     xmlns:localization="clr-namespace:BibleNotify.Localization"
     x:DataType="ContentPage"
     Title="{localization:Translate Key='Avisos'}">
@@ -20,14 +21,11 @@
                 TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
         </VerticalStackLayout>
 
-        <Border
+        <acrylic:AcrylicView
+            Style="{StaticResource AcrylicCard}"
             Grid.Row="1"
             Padding="24"
-            VerticalOptions="Start"
-            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
-            Stroke="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
-            StrokeThickness="1"
-            StrokeShape="RoundRectangle 26">
+            VerticalOptions="Start">
             <VerticalStackLayout Spacing="12">
                 <Label
                     Text="{localization:Translate Key='NOTIFICAÇÕES'}"
@@ -45,6 +43,6 @@
                     LineHeight="1.3"
                     TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
             </VerticalStackLayout>
-        </Border>
+        </acrylic:AcrylicView>
     </Grid>
 </ContentPage>

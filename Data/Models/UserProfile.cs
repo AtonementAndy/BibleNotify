@@ -1,5 +1,3 @@
-using BibleNotify.Localization;
-
 namespace BibleNotify.Data.Models;
 
 public sealed record UserProfile(
@@ -11,11 +9,8 @@ public sealed record UserProfile(
     string Email,
     bool IsPremiumPreview,
     string Theme,
-    string Language)
+    string Language,
+    bool HasSeenWelcome)
 {
     public string FullName => $"{FirstName} {LastName}".Trim();
-
-    public string MembershipName => IsPremiumPreview
-        ? Localizer.Get("Premium (prévia)")
-        : Localizer.Get("Conta gratuita");
 }

@@ -4,237 +4,343 @@
     x:Name="PageRoot"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     xmlns:controls="clr-namespace:BibleNotify.Controls"
     xmlns:localization="clr-namespace:BibleNotify.Localization"
     xmlns:models="clr-namespace:BibleNotify.Data.Models"
-    xmlns:vm="clr-namespace:BibleNotify.ViewModels"
-    x:DataType="vm:ReadingPlanViewModel"
     Title="{localization:Translate Key='Planos'}"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource CanvasLight}, Dark={StaticResource CanvasDark}}">
 
-    <Grid RowDefinitions="*,Auto"
-          Background="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}">
-        <Grid Grid.Row="0" Padding="8,14,8,16" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="16">
-            <VerticalStackLayout Spacing="6">
-                <Label
-                    Text="{localization:Translate Key='Constância, um dia de cada vez.'}"
-                    FontFamily="OpenSansSemibold"
-                    FontSize="26"
-                    SemanticProperties.HeadingLevel="Level1" />
-                <Label
-                    Text="{localization:Translate Key='Acompanhe uma jornada guiada pela Bíblia.'}"
-                    FontSize="14"
-                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-            </VerticalStackLayout>
+    <Grid
+        RowDefinitions="*,Auto"
+        Background="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}">
+        <Grid Grid.Row="0">
+            <CollectionView
+                ItemsSource="{Binding Plans}"
+                IsVisible="{Binding IsPremiumLocked}"
+                SelectionMode="None">
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="16,18,16,8" Spacing="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label
+                                Text="{localization:Translate Key='Constância, um dia de cada vez.'}"
+                                FontFamily="OpenSansSemibold"
+                                FontSize="26"
+                                SemanticProperties.HeadingLevel="Level1" />
+                            <Label
+                                Text="{localization:Translate Key='Acompanhe uma jornada guiada pela Bíblia.'}"
+                                FontSize="14"
+                                TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                        </VerticalStackLayout>
 
-            <Grid
-                Grid.Row="1"
-                RowDefinitions="Auto,Auto,Auto"
-                RowSpacing="12">
-                <Border
-                    Shadow="{x:Null}"
-                    Padding="18"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
-                    Stroke="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 22">
-                    <VerticalStackLayout Spacing="12">
-                        <Label
-                            Text="{localization:Translate Key='ESCOLHA UM PLANO'}"
-                            FontFamily="OpenSansSemibold"
-                            FontSize="11"
-                            CharacterSpacing="1.5"
-                            TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
-                        <CollectionView
-                            ItemsSource="{Binding Plans}"
-                            SelectionMode="None"
-                            HeightRequest="112"
-                            ItemsLayout="HorizontalList">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="models:ReadingPlan">
-                                    <Border
-                                        Shadow="{x:Null}"
-                                        Margin="0,0,10,0"
-                                        Padding="14,12"
-                                        WidthRequest="230"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceRaisedLight}, Dark={StaticResource SurfaceRaisedDark}}"
-                                        Stroke="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
-                                        StrokeThickness="1"
-                                        StrokeShape="RoundRectangle 20">
-                                        <Border.Triggers>
-                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource PrimaryGradient}" />
-                                                <Setter Property="Stroke" Value="{StaticResource Primary}" />
-                                            </DataTrigger>
-                                        </Border.Triggers>
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding BindingContext.SelectPlanCommand, Source={x:Reference PageRoot}}"
-                                                CommandParameter="{Binding .}" />
-                                        </Border.GestureRecognizers>
-                                        <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,Auto" RowSpacing="8">
-                                            <Label
-                                                Text="{Binding Title}"
-                                                FontFamily="OpenSansSemibold"
-                                                FontSize="14"
-                                                LineBreakMode="TailTruncation"
-                                                VerticalTextAlignment="Center" />
-                                            <Label
-                                                Grid.Column="1"
-                                                Text="›"
-                                                FontSize="22"
-                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
-                                                VerticalTextAlignment="Center" />
-                                            <Label
-                                                Grid.Row="1"
-                                                Text="{Binding DaysLabel}"
-                                                FontSize="12"
-                                                TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                        <Label
-                            Text="{Binding SelectedPlan.Description}"
-                            FontSize="14"
-                            TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                        <Button
-                            Text="{Binding SelectedPlanActionText}"
-                            IsEnabled="{Binding IsPremium}"
-                            Command="{Binding StartPlanCommand}" />
+                        <acrylic:AcrylicView
+                            Style="{StaticResource AcrylicCard}"
+                            Padding="18">
+                            <VerticalStackLayout Spacing="8">
+                                <Label
+                                    Text="{localization:Translate Key='PLANOS DE LEITURA'}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="11"
+                                    CharacterSpacing="1.4"
+                                    TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                                <Label
+                                    Text="{localization:Translate Key='Escolha uma jornada para conhecer os livros, a duração e o foco de cada plano.'}"
+                                    FontSize="14"
+                                    LineHeight="1.3"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                            </VerticalStackLayout>
+                        </acrylic:AcrylicView>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:ReadingPlan">
+                        <acrylic:AcrylicView
+                            Style="{StaticResource AcrylicCard}"
+                            Margin="16,6"
+                            Padding="16"
+                            SemanticProperties.Hint="{localization:Translate Key='Toque para ver os recursos Premium'}">
+                            <acrylic:AcrylicView.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.SelectPlanCommand, Source={x:Reference PageRoot}}"
+                                    CommandParameter="{Binding .}" />
+                            </acrylic:AcrylicView.GestureRecognizers>
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <Label
+                                        Text="{Binding Title}"
+                                        FontFamily="OpenSansSemibold"
+                                        FontSize="16"
+                                        VerticalTextAlignment="Center" />
+                                    <Label
+                                        Grid.Column="1"
+                                        Text="{Binding DaysLabel}"
+                                        FontSize="12"
+                                        TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
+                                        VerticalTextAlignment="Center" />
+                                </Grid>
+                                <Label
+                                    Text="{Binding Description}"
+                                    FontSize="13"
+                                    LineHeight="1.25"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                            </VerticalStackLayout>
+                        </acrylic:AcrylicView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <Label
+                        Text="{localization:Translate Key='Nenhum plano de leitura disponível no momento.'}"
+                        Margin="20"
+                        FontSize="14"
+                        TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                </CollectionView.EmptyView>
+
+                <CollectionView.Footer>
+                    <VerticalStackLayout Padding="16,12,16,24" Spacing="12">
+                        <acrylic:AcrylicView
+                            Style="{StaticResource AcrylicCard}"
+                            Padding="16">
+                            <VerticalStackLayout Spacing="6">
+                                <Label
+                                    Text="{localization:Translate Key='🔒 PLANOS E PROGRESSO PREMIUM'}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                                <Label
+                                    Text="{localization:Translate Key='Conheça os formatos abaixo. Para iniciar um plano, acompanhar leituras e salvar seu progresso, é necessário o Premium.'}"
+                                    FontSize="13"
+                                    LineHeight="1.3"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                            </VerticalStackLayout>
+                        </acrylic:AcrylicView>
                         <Button
                             Text="{Binding UpgradeButtonText}"
-                            IsVisible="{Binding IsPremiumLocked}"
                             Command="{Binding UpgradeCommand}"
                             Background="{StaticResource PrimaryGradient}"
                             TextColor="{StaticResource OnPrimary}" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border
-                    Grid.Row="1"
-                    Shadow="{x:Null}"
-                    IsVisible="{Binding IsPremiumLocked}"
-                    Padding="16"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
-                    Stroke="{StaticResource Secondary}"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 22">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="{localization:Translate Key='🔒 PLANOS E PROGRESSO PREMIUM'}" FontFamily="OpenSansSemibold" FontSize="12"
-                               TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
                         <Label
-                            Text="{localization:Translate Key='Conheça os formatos abaixo. Para iniciar um plano, acompanhar leituras e salvar seu progresso, é necessário o Premium.'}"
-                            FontSize="13"
-                            TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                            Text="{Binding InfoMessage}"
+                            TextColor="{StaticResource Accent}"
+                            FontSize="13" />
+                        <Label
+                            Text="{Binding ErrorMessage}"
+                            IsVisible="{Binding HasError}"
+                            TextColor="{StaticResource Error}"
+                            FontSize="13" />
                     </VerticalStackLayout>
-                </Border>
-
-                <Border
-                    Grid.Row="2"
-                    Shadow="{x:Null}"
-                    IsVisible="{Binding HasPlan}"
-                    Padding="18"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
-                    Stroke="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 22">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="{localization:Translate Key='LEITURAS DO PLANO'}" FontFamily="OpenSansSemibold" FontSize="11" CharacterSpacing="1.5"
-                               TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
-                    </VerticalStackLayout>
-                </Border>
-            </Grid>
-
-            <CollectionView
-                Grid.Row="2"
-                IsVisible="{Binding IsPremiumLocked}"
-                ItemsSource="{Binding Plans}"
-                SelectionMode="None">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:ReadingPlan">
-                        <Border
-                            Shadow="{x:Null}"
-                            Margin="0,0,0,10"
-                            Padding="16"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
-                            Stroke="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
-                            StrokeThickness="1"
-                            StrokeShape="RoundRectangle 20">
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="6">
-                                <Label Text="{Binding Title}" FontFamily="OpenSansSemibold" FontSize="16" />
-                                <Label Grid.Column="1" Text="{Binding DaysLabel}" FontSize="12"
-                                       TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
-                                <Label
-                                    Grid.Row="1"
-                                    Grid.ColumnSpan="2"
-                                    Text="{Binding Description}"
-                                    FontSize="13"
-                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
+                </CollectionView.Footer>
             </CollectionView>
 
             <CollectionView
-                Grid.Row="2"
                 ItemsSource="{Binding Days}"
                 IsVisible="{Binding IsPremium}"
                 SelectionMode="None">
+                <CollectionView.Header>
+                    <VerticalStackLayout Padding="16,18,16,8" Spacing="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label
+                                Text="{localization:Translate Key='Constância, um dia de cada vez.'}"
+                                FontFamily="OpenSansSemibold"
+                                FontSize="26"
+                                SemanticProperties.HeadingLevel="Level1" />
+                            <Label
+                                Text="{localization:Translate Key='Acompanhe uma jornada guiada pela Bíblia.'}"
+                                FontSize="14"
+                                TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                        </VerticalStackLayout>
+
+                        <acrylic:AcrylicView
+                            Style="{StaticResource AcrylicCard}"
+                            Padding="18">
+                            <VerticalStackLayout Spacing="12">
+                                <Label
+                                    Text="{localization:Translate Key='SUA JORNADA'}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="11"
+                                    CharacterSpacing="1.4"
+                                    TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                                <Label
+                                    Text="{Binding SelectedPlan.Title}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="20" />
+                                <Label
+                                    Text="{Binding SelectedPlan.Description}"
+                                    FontSize="14"
+                                    LineHeight="1.3"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                                <Button
+                                    Text="{Binding SelectedPlanActionText}"
+                                    Command="{Binding StartPlanCommand}" />
+                                <Label
+                                    Text="{Binding InfoMessage}"
+                                    IsVisible="{Binding HasInfoMessage}"
+                                    TextColor="{StaticResource Accent}"
+                                    FontSize="13" />
+                            </VerticalStackLayout>
+                        </acrylic:AcrylicView>
+
+                        <Label
+                            Text="{localization:Translate Key='ESCOLHA OUTRO PLANO'}"
+                            FontFamily="OpenSansSemibold"
+                            FontSize="11"
+                            CharacterSpacing="1.4"
+                            TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+
+                        <VerticalStackLayout
+                            BindableLayout.ItemsSource="{Binding Plans}"
+                            Spacing="8">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="models:ReadingPlan">
+                                    <acrylic:AcrylicView
+                                        Style="{StaticResource AcrylicCard}"
+                                        Padding="14">
+                                        <acrylic:AcrylicView.Triggers>
+                                            <DataTrigger
+                                                TargetType="acrylic:AcrylicView"
+                                                Binding="{Binding IsSelected}"
+                                                Value="True">
+                                                <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                                                <Setter Property="BorderThickness" Value="2" />
+                                            </DataTrigger>
+                                        </acrylic:AcrylicView.Triggers>
+                                        <acrylic:AcrylicView.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding BindingContext.SelectPlanCommand, Source={x:Reference PageRoot}}"
+                                                CommandParameter="{Binding .}" />
+                                        </acrylic:AcrylicView.GestureRecognizers>
+                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="4">
+                                            <Label
+                                                Text="{Binding Title}"
+                                                FontFamily="OpenSansSemibold"
+                                                FontSize="15" />
+                                            <Label
+                                                Grid.Column="1"
+                                                Text="{Binding DaysLabel}"
+                                                FontSize="12"
+                                                TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                                            <Label
+                                                Grid.Row="1"
+                                                Grid.ColumnSpan="2"
+                                                Text="{Binding Description}"
+                                                FontSize="12"
+                                                LineHeight="1.2"
+                                                TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                                            <Label
+                                                Grid.Row="2"
+                                                Text="{localization:Translate Key='Selecionado'}"
+                                                IsVisible="{Binding IsSelected}"
+                                                FontFamily="OpenSansSemibold"
+                                                FontSize="11"
+                                                TextColor="{StaticResource Primary}" />
+                                        </Grid>
+                                    </acrylic:AcrylicView>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Label
+                            Text="{localization:Translate Key='LEITURAS DO PLANO'}"
+                            FontFamily="OpenSansSemibold"
+                            FontSize="11"
+                            CharacterSpacing="1.4"
+                            TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:PlanDay">
-                        <Grid Padding="0,10" ColumnDefinitions="36,*,Auto,Auto" ColumnSpacing="8">
-                            <Label
-                                Text="{Binding DayLabel}"
-                                FontFamily="OpenSansSemibold"
-                                FontSize="13"
-                                TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
-                                VerticalTextAlignment="Center" />
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <Label Text="{Binding Reference}" FontSize="14" />
+                        <acrylic:AcrylicView
+                            Style="{StaticResource AcrylicCard}"
+                            Margin="16,5"
+                            Padding="12">
+                            <Grid
+                                ColumnDefinitions="38,*,Auto"
+                                RowDefinitions="Auto,Auto"
+                                ColumnSpacing="10"
+                                RowSpacing="8">
                                 <Label
+                                    Grid.RowSpan="2"
+                                    Text="{Binding DayLabel}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
+                                    VerticalTextAlignment="Center" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding Reference}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="14"
+                                    VerticalTextAlignment="Center" />
+                                <Label
+                                    Grid.Column="2"
                                     Text="{localization:Translate Key='Concluído'}"
                                     IsVisible="{Binding IsCompleted}"
                                     FontSize="11"
-                                    TextColor="{StaticResource Success}" />
-                            </VerticalStackLayout>
-                            <Button
-                                Grid.Column="2"
-                                Text="{localization:Translate Key='Ler'}"
-                                Padding="12,6"
-                                MinimumHeightRequest="40"
-                                FontSize="12"
-                                Command="{Binding BindingContext.OpenDayCommand, Source={x:Reference PageRoot}}"
-                                CommandParameter="{Binding .}" />
-                            <Button
-                                Grid.Column="3"
-                                Text="{localization:Translate Key='Marcar lido'}"
-                                Padding="12,6"
-                                MinimumHeightRequest="40"
-                                FontSize="12"
-                                IsVisible="{Binding Source={x:Reference PageRoot}, Path=BindingContext.IsPremium}"
-                                Command="{Binding BindingContext.CompleteDayCommand, Source={x:Reference PageRoot}}"
-                                CommandParameter="{Binding .}" />
-                        </Grid>
+                                    TextColor="{StaticResource Success}"
+                                    VerticalTextAlignment="Center" />
+                                <HorizontalStackLayout
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Grid.ColumnSpan="2"
+                                    Spacing="8">
+                                    <Button
+                                        Text="{localization:Translate Key='Ler'}"
+                                        Padding="12,5"
+                                        MinimumHeightRequest="40"
+                                        FontSize="12"
+                                        Command="{Binding BindingContext.OpenDayCommand, Source={x:Reference PageRoot}}"
+                                        CommandParameter="{Binding .}" />
+                                    <Button
+                                        Text="{localization:Translate Key='Marcar lido'}"
+                                        Padding="12,5"
+                                        MinimumHeightRequest="40"
+                                        FontSize="12"
+                                        Command="{Binding BindingContext.CompleteDayCommand, Source={x:Reference PageRoot}}"
+                                        CommandParameter="{Binding .}" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </acrylic:AcrylicView>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
-            </CollectionView>
 
-            <Label
-                Grid.Row="3"
-                Text="{Binding InfoMessage}"
-                TextColor="{StaticResource Accent}"
-                FontSize="13" />
-            <Label
-                Grid.Row="4"
-                Text="{Binding ErrorMessage}"
-                IsVisible="{Binding HasError}"
-                TextColor="{StaticResource Error}"
-                FontSize="13" />
+                <CollectionView.EmptyView>
+                    <Grid Padding="16,4" VerticalOptions="Start">
+                        <Border Style="{StaticResource ElevatedCard}" Padding="16" VerticalOptions="Start">
+                            <VerticalStackLayout Spacing="10">
+                                <Label
+                                    Text="{localization:Translate Key='Seu plano ainda não começou.'}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="15" />
+                                <Label
+                                    Text="{localization:Translate Key='Inicie o plano para ver as leituras diárias.'}"
+                                    FontSize="13"
+                                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                                <Button
+                                    Text="{Binding SelectedPlanActionText}"
+                                    Command="{Binding BindingContext.StartPlanCommand, Source={x:Reference PageRoot}}"
+                                    HorizontalOptions="Start" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </CollectionView.EmptyView>
+
+                <CollectionView.Footer>
+                    <VerticalStackLayout Padding="16,8,16,24" Spacing="8">
+                        <Label
+                            Text="{Binding ErrorMessage}"
+                            IsVisible="{Binding HasError}"
+                            TextColor="{StaticResource Error}"
+                            FontSize="13" />
+                    </VerticalStackLayout>
+                </CollectionView.Footer>
+            </CollectionView>
         </Grid>
-        <controls:FloatingTabBar Grid.Row="1" SelectedTab="plans" />
+
+        <controls:FloatingTabBar
+            Grid.Row="1"
+            SelectedTab="plans" />
     </Grid>
 </ContentPage>

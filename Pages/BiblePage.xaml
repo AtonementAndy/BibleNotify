@@ -3,6 +3,7 @@
     x:Class="BibleNotify.Pages.BiblePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     xmlns:controls="clr-namespace:BibleNotify.Controls"
     xmlns:localization="clr-namespace:BibleNotify.Localization"
     xmlns:models="clr-namespace:BibleNotify.Data.Models"
@@ -10,129 +11,271 @@
     x:DataType="vm:BibleViewModel"
     Title="{Binding ChapterTitle}"
     Padding="0"
-    Shell.NavBarIsVisible="False"
-    BackgroundColor="{AppThemeBinding Light={StaticResource CanvasLight}, Dark={StaticResource CanvasDark}}">
+    Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="*,Auto"
-          Background="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}">
-    <Grid Grid.Row="0" Padding="10,10,10,6" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
-        <Border
-            Padding="16"
-            BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
-            Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
-            StrokeThickness="1"
-            StrokeShape="RoundRectangle 22">
-            <VerticalStackLayout Spacing="8">
-                <Label
-                    Text="{localization:Translate Key='SELECIONE LIVRO E CAPÍTULO'}"
-                    FontFamily="OpenSansSemibold"
-                    FontSize="11"
-                    CharacterSpacing="1.2"
-                    TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
-                <Grid ColumnDefinitions="2*,*" ColumnSpacing="12">
-                    <Border Style="{StaticResource GlassInputBorder}" Padding="8,0">
-                        <controls:ModernPicker
-                            Title="{localization:Translate Key='Livro'}"
-                            ItemsSource="{Binding Books}"
-                            SelectedItem="{Binding SelectedBook, Mode=TwoWay}"
-                            ItemDisplayBinding="{Binding Name}"
-                            SemanticProperties.Description="{localization:Translate Key='Selecione um livro da Bíblia'}" />
-                    </Border>
-                    <Border Grid.Column="1" Style="{StaticResource GlassInputBorder}" Padding="8,0">
-                        <controls:ModernPicker
-                            Title="{localization:Translate Key='Capítulo'}"
-                            ItemsSource="{Binding Chapters}"
-                            SelectedItem="{Binding SelectedChapter, Mode=TwoWay}"
-                            SemanticProperties.Description="{localization:Translate Key='Selecione o capítulo'}" />
-                    </Border>
-                </Grid>
-            </VerticalStackLayout>
-        </Border>
+    <!-- GRID PRINCIPAL (Fundo do App inteiro) -->
+    <Grid
+        RowDefinitions="*,Auto">
 
-        <Grid Grid.Row="1">
-            <VerticalStackLayout Spacing="2">
+        <!-- O Gradiente de fundo Premium -->
+        <Grid.Background>
+            <LinearGradientBrush
+                StartPoint="0,0"
+                EndPoint="1,1">
+                <GradientStop
+                    Color="{AppThemeBinding Light=#F4F7FB, Dark=#0F172A}"
+                    Offset="0.0" />
+                <GradientStop
+                    Color="{AppThemeBinding Light=#E2E8F0, Dark=#1E293B}"
+                    Offset="0.5" />
+                <GradientStop
+                    Color="{AppThemeBinding Light=#CBD5E1, Dark=#020617}"
+                    Offset="1.0" />
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <!-- CONTEÚDO DA TELA -->
+        <Grid
+            Grid.Row="0"
+            Padding="16,20,16,10"
+            RowDefinitions="Auto,Auto,*,Auto"
+            RowSpacing="16">
+
+            <!-- Círculos decorativos posicionados atrás do card superior para o Blur ter o que desfocar -->
+            <Ellipse
+                Grid.Row="0"
+                WidthRequest="170"
+                HeightRequest="170"
+                Fill="{StaticResource Primary}"
+                Opacity="0.25"
+                HorizontalOptions="End"
+                VerticalOptions="Start"
+                Margin="0,-35,-25,0" />
+
+            <Ellipse
+                Grid.Row="0"
+                WidthRequest="120"
+                HeightRequest="120"
+                Fill="{StaticResource Accent}"
+                Opacity="0.20"
+                HorizontalOptions="Start"
+                VerticalOptions="End"
+                Margin="-25,0,0,-25" />
+
+            <!-- CARD DE SELEÇÃO (AcrylicView) -->
+            <acrylic:AcrylicView
+                Style="{StaticResource AcrylicCard}"
+                Grid.Row="0"
+                Padding="16"
+                CornerRadius="22">
+
+                <VerticalStackLayout
+                    Spacing="8">
+                    <Label
+                        Text="{localization:Translate Key='SELECIONE LIVRO E CAPÍTULO'}"
+                        FontFamily="OpenSansSemibold"
+                        FontSize="11"
+                        CharacterSpacing="1.2"
+                        TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+
+                    <Grid
+                        ColumnDefinitions="2*,*"
+                        ColumnSpacing="12">
+                        <Border
+                            Style="{StaticResource GlassInputBorder}"
+                            Padding="8,0">
+                            <controls:ModernPicker
+                                Title="{localization:Translate Key='Livro'}"
+                                ItemsSource="{Binding Books}"
+                                SelectedItem="{Binding SelectedBook, Mode=TwoWay}"
+                                ItemDisplayBinding="{Binding Name}" />
+                        </Border>
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource GlassInputBorder}"
+                            Padding="8,0">
+                            <controls:ModernPicker
+                                Title="{localization:Translate Key='Capítulo'}"
+                                ItemsSource="{Binding Chapters}"
+                                SelectedItem="{Binding SelectedChapter, Mode=TwoWay}" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </acrylic:AcrylicView>
+
+            <!-- TÍTULO DO CAPÍTULO -->
+            <Grid
+                Grid.Row="1"
+                Margin="4,0,4,0">
+                <VerticalStackLayout
+                    Spacing="4">
+                    <Label
+                        Text="{Binding ChapterTitle}"
+                        FontFamily="OpenSansSemibold"
+                        FontSize="26"
+                        TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
+                        SemanticProperties.HeadingLevel="Level1" />
+                    <Label
+                        Text="{localization:Translate Key='Bíblia Livre · leitura offline'}"
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- LISTA DE VERSÍCULOS -->
+            <Grid
+                Grid.Row="2"
+                Margin="4,0,4,0">
+                <CollectionView
+                    ItemsSource="{Binding Verses}"
+                    SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate
+                            x:DataType="models:BibleVerse">
+                            <Grid
+                                Padding="0,12"
+                                ColumnDefinitions="35,*"
+                                ColumnSpacing="10">
+                                <Label
+                                    Text="{Binding Verse}"
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="14"
+                                    TextColor="{StaticResource Primary}"
+                                    VerticalOptions="Start" />
+                                <Label
+                                    Grid.Column="1"
+                                    Text="{Binding Text}"
+                                    FontSize="18"
+                                    LineHeight="1.4"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
+                                    VerticalOptions="Start" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <VerticalStackLayout
+                    IsVisible="{Binding IsBusy}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center">
+                    <ActivityIndicator
+                        IsRunning="{Binding IsBusy}"
+                        Color="{StaticResource Primary}" />
+                    <Label
+                        Text="{localization:Translate Key='Abrindo capítulo...'}"
+                        FontSize="13"
+                        Margin="0,10,0,0"
+                        TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+                </VerticalStackLayout>
+
                 <Label
+                    Text="{Binding ErrorMessage}"
+                    IsVisible="{Binding HasError}"
+                    TextColor="{StaticResource Error}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    FontSize="14" />
+            </Grid>
+
+            <!-- BOTÕES ANTERIOR / PRÓXIMO (ESTILO FIGMA) -->
+            <Grid
+                Grid.Row="3"
+                ColumnDefinitions="*,Auto,*"
+                ColumnSpacing="12"
+                Margin="0,10,0,0">
+
+                <!-- Botão Anterior -->
+                <Border
+                    Grid.Column="0"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 16"
+                    HeightRequest="50"
+                    IsEnabled="{Binding CanGoPrevious}">
+                    <Border.Background>
+                        <LinearGradientBrush
+                            StartPoint="0,0"
+                            EndPoint="1,0">
+                            <GradientStop
+                                Color="#37B6E9"
+                                Offset="0.0" />
+                            <GradientStop
+                                Color="#4B4CED"
+                                Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Shadow>
+                        <Shadow
+                            Brush="#4B4CED"
+                            Offset="0,4"
+                            Radius="10"
+                            Opacity="0.4" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding GoToPreviousChapterCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label
+                        Text="{localization:Translate Key='Anterior'}"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+
+                <!-- Título Central -->
+                <Label
+                    Grid.Column="1"
                     Text="{Binding ChapterTitle}"
-                    FontFamily="OpenSansSemibold"
-                    FontSize="22"
-                    SemanticProperties.HeadingLevel="Level1" />
-                <Label
-                    Text="{localization:Translate Key='Bíblia Livre · leitura offline'}"
-                    FontSize="12"
-                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
-            </VerticalStackLayout>
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    VerticalTextAlignment="Center"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}" />
+
+                <!-- Botão Próximo -->
+                <Border
+                    Grid.Column="2"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 16"
+                    HeightRequest="50"
+                    IsEnabled="{Binding CanGoNext}">
+                    <Border.Background>
+                        <LinearGradientBrush
+                            StartPoint="0,0"
+                            EndPoint="1,0">
+                            <GradientStop
+                                Color="#37B6E9"
+                                Offset="0.0" />
+                            <GradientStop
+                                Color="#4B4CED"
+                                Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Shadow>
+                        <Shadow
+                            Brush="#4B4CED"
+                            Offset="0,4"
+                            Radius="10"
+                            Opacity="0.4" />
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding GoToNextChapterCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label
+                        Text="{localization:Translate Key='Próximo'}"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+                </Border>
+            </Grid>
         </Grid>
 
-        <Grid Grid.Row="2">
-            <CollectionView
-                ItemsSource="{Binding Verses}"
-                SelectionMode="None">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:BibleVerse">
-                        <Grid
-                            Padding="4,10"
-                            ColumnDefinitions="30,*"
-                            ColumnSpacing="8">
-                            <Label
-                                Text="{Binding Verse}"
-                                FontFamily="OpenSansSemibold"
-                                FontSize="13"
-                                TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
-                                VerticalOptions="Start" />
-                            <Label
-                                Grid.Column="1"
-                                Text="{Binding Text}"
-                                FontSize="17"
-                                LineHeight="1.35"
-                                VerticalOptions="Start" />
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-            <VerticalStackLayout
-                IsVisible="{Binding IsBusy}"
-                VerticalOptions="Center"
-                HorizontalOptions="Center">
-                <ActivityIndicator IsRunning="{Binding IsBusy}" Color="{StaticResource Primary}" />
-                <Label Text="{localization:Translate Key='Abrindo capítulo...'}" FontSize="13" />
-            </VerticalStackLayout>
-            <Label
-                Text="{Binding ErrorMessage}"
-                IsVisible="{Binding HasError}"
-                TextColor="{StaticResource Error}"
-                HorizontalOptions="Center"
-                VerticalOptions="Center"
-                FontSize="14" />
-        </Grid>
+        <!-- BARRA INFERIOR FLUTUANTE -->
+        <controls:FloatingTabBar
+            Grid.Row="1"
+            SelectedTab="bible" />
 
-        <Grid Grid.Row="3" ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
-            <Button
-                Text="{localization:Translate Key='Anterior'}"
-                Command="{Binding GoToPreviousChapterCommand}"
-                IsEnabled="{Binding CanGoPrevious}"
-                Padding="14,10"
-                MinimumHeightRequest="44"
-                FontSize="13"
-                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceRaisedLight}, Dark={StaticResource SurfaceRaisedDark}}"
-                TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}" />
-            <Label
-                Grid.Column="1"
-                Text="{Binding ChapterTitle}"
-                FontSize="12"
-                VerticalTextAlignment="Center"
-                HorizontalTextAlignment="Center" />
-            <Button
-                Grid.Column="2"
-                Text="{localization:Translate Key='Próximo'}"
-                Command="{Binding GoToNextChapterCommand}"
-                IsEnabled="{Binding CanGoNext}"
-                Padding="14,10"
-                MinimumHeightRequest="44"
-                FontSize="13"
-                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceRaisedLight}, Dark={StaticResource SurfaceRaisedDark}}"
-                TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}" />
-        </Grid>
-    </Grid>
-        <controls:FloatingTabBar Grid.Row="1" SelectedTab="bible" />
     </Grid>
 </ContentPage>

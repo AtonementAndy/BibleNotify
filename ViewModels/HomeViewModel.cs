@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BibleNotify.Data.Models;
 using BibleNotify.Localization;
 using BibleNotify.Services;
@@ -63,6 +64,17 @@ public partial class HomeViewModel(
 
     public bool IsStreakLocked => !ShowPremiumStreak;
 
+    public double NotesPreviewOpacity => ShowPremiumStreak ? 1 : 0.55;
+
+    public string NotesDescription => ShowPremiumStreak
+        ? Localizer.Get("Guarde reflexões e versículos importantes.")
+        : Localizer.Get("Desbloqueie o Premium para escrever e salvar suas reflexões.");
+
+    public string NotesActionText => Localizer.Get(ShowPremiumStreak ? "Abrir" : "Premium");
+
+    public string NotesActionHint => Localizer.Get(
+        ShowPremiumStreak ? "Abre suas anotações bíblicas" : "Abre as opções Premium");
+
     public string StreakUpgradeMessage => userData.IsGuestSession
         ? Localizer.Get("Acompanhe seus dias consecutivos com uma conta Premium.")
         : Localizer.Get("Acompanhe seus dias consecutivos com o Premium.");
@@ -80,6 +92,11 @@ public partial class HomeViewModel(
         ErrorMessage = null;
         try
         {
+            if (userData.IsFirstLoginInSession)
+            {
+                await userData.MarkWelcomeSeenAsync();
+            }
+
             if (DailyVerse is null)
             {
                 var previousVerseId = Preferences.Get("dashboard-last-verse-id", 0);
@@ -101,7 +118,7 @@ public partial class HomeViewModel(
                 ErrorMessage = Localizer.Get("Não foi possível escolher um versículo para hoje.");
             }
 
-            if (userData.CurrentUser?.IsPremiumPreview == true)
+            if (userData.HasPremiumAccess)
             {
                 ReadingStreak = await userData.GetCurrentStreakAsync();
                 var activePlan = (await userData.GetReadingPlansAsync())
@@ -134,6 +151,7 @@ public partial class HomeViewModel(
             }
             else
             {
+                ReadingStreak = 0;
                 HasActiveReadingPlan = false;
                 OnPropertyChanged(nameof(ShowPremiumPlanCard));
                 OnPropertyChanged(nameof(ShowActivePlanDetails));
@@ -141,13 +159,30 @@ public partial class HomeViewModel(
         }
         catch (InvalidDataException exception)
         {
-            logger.LogError(exception, "The bundled Bible database failed validation.");
-            ErrorMessage = Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.");
+            logger.LogError(exception, "The Bible data source returned invalid data.");
+            ErrorMessage = Localizer.IsPortuguese
+                ? Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.")
+                : Localizer.Get("O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde.");
+        }
+        catch (HttpRequestException exception)
+        {
+            logger.LogWarning(exception, "Could not load a Bible passage from the online translation service.");
+            ErrorMessage = Localizer.Get("Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente.");
+        }
+        catch (TaskCanceledException exception)
+        {
+            logger.LogWarning(exception, "The online Bible request timed out.");
+            ErrorMessage = Localizer.Get("Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente.");
         }
         catch (IOException exception)
         {
             logger.LogError(exception, "Could not load the daily Bible verse.");
             ErrorMessage = Localizer.Get("Não foi possível carregar o versículo. Tente novamente.");
+        }
+        catch (JsonException exception)
+        {
+            logger.LogError(exception, "The online Bible service returned malformed verse data.");
+            ErrorMessage = Localizer.Get("O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde.");
         }
         catch (SqliteException exception)
         {
@@ -166,7 +201,9 @@ public partial class HomeViewModel(
         : navigator.NavigateToBibleAsync(DailyVerse.BookId, DailyVerse.Chapter);
 
     [RelayCommand]
-    private Task OpenNotesAsync() => navigator.NavigateToNotesAsync();
+    private Task OpenNotesAsync() => userData.HasPremiumAccess
+        ? navigator.NavigateToNotesAsync()
+        : navigator.NavigateToPremiumAsync();
 
     [RelayCommand]
     private Task OpenReadingPlanAsync() => MainThread.InvokeOnMainThreadAsync(
@@ -181,7 +218,7 @@ public partial class HomeViewModel(
     private void UpdateGreeting()
     {
         var user = userData.CurrentUser;
-        ShowPremiumStreak = user?.IsPremiumPreview == true;
+        ShowPremiumStreak = userData.HasPremiumAccess;
         ShowCreateAccount = userData.IsGuestSession;
         OnPropertyChanged(nameof(IsStreakLocked));
         OnPropertyChanged(nameof(StreakUpgradeMessage));
@@ -194,15 +231,26 @@ public partial class HomeViewModel(
             return;
         }
 
-        var role = user.MinistryRole.Trim();
-        var firstName = user.FirstName.Trim();
-        Greeting = Localizer.Format(
-            "Olá, {0} {1}, que bom ter você por aqui.",
-            Localizer.GetMinistryRole(role).ToLowerInvariant(),
-            firstName);
-        AccountLabel = user.MembershipName;
+        Greeting = Localizer.GetWelcomeGreeting(
+            userData.IsFirstLoginInSession,
+            user.FullName,
+            Localizer.GetMinistryRole(user.MinistryRole),
+            DateTime.Now);
+        AccountLabel = Localizer.Get(
+            userData.HasPremiumAccess ? "Premium · prévia local" : "Conta gratuita");
     }
 
     partial void OnReadingStreakChanged(int value) =>
         OnPropertyChanged(nameof(ReadingStreakLabel));
+
+    partial void OnShowPremiumStreakChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsStreakLocked));
+        OnPropertyChanged(nameof(ShowPremiumPlanCard));
+        OnPropertyChanged(nameof(NotesPreviewOpacity));
+        OnPropertyChanged(nameof(NotesDescription));
+        OnPropertyChanged(nameof(NotesActionText));
+        OnPropertyChanged(nameof(NotesActionHint));
+        OnPropertyChanged(nameof(StreakUpgradeMessage));
+    }
 }
