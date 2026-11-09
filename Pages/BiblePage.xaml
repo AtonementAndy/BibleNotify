@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    x:Class="BibleNotify.Pages.BiblePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:BibleNotify.Controls"
+    xmlns:localization="clr-namespace:BibleNotify.Localization"
+    xmlns:models="clr-namespace:BibleNotify.Data.Models"
+    xmlns:vm="clr-namespace:BibleNotify.ViewModels"
+    x:DataType="vm:BibleViewModel"
+    Title="{Binding ChapterTitle}"
+    Padding="0"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource CanvasLight}, Dark={StaticResource CanvasDark}}">
+
+    <Grid RowDefinitions="*,Auto"
+          Background="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}">
+    <Grid Grid.Row="0" Padding="10,10,10,6" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
+        <Border
+            Padding="16"
+            BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}"
+            Stroke="{AppThemeBinding Light={StaticResource GlassBorderLight}, Dark={StaticResource GlassBorderDark}}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 22">
+            <VerticalStackLayout Spacing="8">
+                <Label
+                    Text="{localization:Translate Key='SELECIONE LIVRO E CAPÍTULO'}"
+                    FontFamily="OpenSansSemibold"
+                    FontSize="11"
+                    CharacterSpacing="1.2"
+                    TextColor="{AppThemeBinding Light={StaticResource SecondaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                <Grid ColumnDefinitions="2*,*" ColumnSpacing="12">
+                    <Border Style="{StaticResource GlassInputBorder}" Padding="8,0">
+                        <controls:ModernPicker
+                            Title="{localization:Translate Key='Livro'}"
+                            ItemsSource="{Binding Books}"
+                            SelectedItem="{Binding SelectedBook, Mode=TwoWay}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SemanticProperties.Description="{localization:Translate Key='Selecione um livro da Bíblia'}" />
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource GlassInputBorder}" Padding="8,0">
+                        <controls:ModernPicker
+                            Title="{localization:Translate Key='Capítulo'}"
+                            ItemsSource="{Binding Chapters}"
+                            SelectedItem="{Binding SelectedChapter, Mode=TwoWay}"
+                            SemanticProperties.Description="{localization:Translate Key='Selecione o capítulo'}" />
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <VerticalStackLayout Spacing="2">
+                <Label
+                    Text="{Binding ChapterTitle}"
+                    FontFamily="OpenSansSemibold"
+                    FontSize="22"
+                    SemanticProperties.HeadingLevel="Level1" />
+                <Label
+                    Text="{localization:Translate Key='Bíblia Livre · leitura offline'}"
+                    FontSize="12"
+                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <CollectionView
+                ItemsSource="{Binding Verses}"
+                SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:BibleVerse">
+                        <Grid
+                            Padding="4,10"
+                            ColumnDefinitions="30,*"
+                            ColumnSpacing="8">
+                            <Label
+                                Text="{Binding Verse}"
+                                FontFamily="OpenSansSemibold"
+                                FontSize="13"
+                                TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
+                                VerticalOptions="Start" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding Text}"
+                                FontSize="17"
+                                LineHeight="1.35"
+                                VerticalOptions="Start" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            <VerticalStackLayout
+                IsVisible="{Binding IsBusy}"
+                VerticalOptions="Center"
+                HorizontalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding IsBusy}" Color="{StaticResource Primary}" />
+                <Label Text="{localization:Translate Key='Abrindo capítulo...'}" FontSize="13" />
+            </VerticalStackLayout>
+            <Label
+                Text="{Binding ErrorMessage}"
+                IsVisible="{Binding HasError}"
+                TextColor="{StaticResource Error}"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                FontSize="14" />
+        </Grid>
+
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
+            <Button
+                Text="{localization:Translate Key='Anterior'}"
+                Command="{Binding GoToPreviousChapterCommand}"
+                IsEnabled="{Binding CanGoPrevious}"
+                Padding="14,10"
+                MinimumHeightRequest="44"
+                FontSize="13"
+                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceRaisedLight}, Dark={StaticResource SurfaceRaisedDark}}"
+                TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}" />
+            <Label
+                Grid.Column="1"
+                Text="{Binding ChapterTitle}"
+                FontSize="12"
+                VerticalTextAlignment="Center"
+                HorizontalTextAlignment="Center" />
+            <Button
+                Grid.Column="2"
+                Text="{localization:Translate Key='Próximo'}"
+                Command="{Binding GoToNextChapterCommand}"
+                IsEnabled="{Binding CanGoNext}"
+                Padding="14,10"
+                MinimumHeightRequest="44"
+                FontSize="13"
+                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceRaisedLight}, Dark={StaticResource SurfaceRaisedDark}}"
+                TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}" />
+        </Grid>
+    </Grid>
+        <controls:FloatingTabBar Grid.Row="1" SelectedTab="bible" />
+    </Grid>
+</ContentPage>

@@ -1,0 +1,14 @@
+Bíblia Livre (BLIVRE), edição brasileira de fevereiro de 2018
+
+Copyright © 2018 Diego Santos, Mario Sérgio e Marco Teles.
+Fonte: https://ebible.org/Scriptures/porbr2018_vpl.zip
+Projeto: https://sites.google.com/site/biblialivre/
+Licença: Creative Commons Atribuição 4.0 Brasil (CC BY 4.0 BR)
+https://creativecommons.org/licenses/by/4.0/br/
+
+O texto bíblico é distribuído sob CC BY 4.0 BR. A atribuição aos autores e à
+fonte deve ser mantida. A edição utilizada é um trabalho em andamento; a data
+da versão deve ser informada ao redistribuí-la.
+
+Esta edição foi convertida do formato VPL para um banco SQLite local. O texto
+dos versículos foi preservado; somente a estrutura de armazenamento mudou.

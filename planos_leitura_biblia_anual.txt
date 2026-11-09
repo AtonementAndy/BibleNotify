@@ -1,0 +1,119 @@
+================================================================================
+                    PLANOS DE LEITURA DA BÍBLIA EM 1 ANO
+================================================================================
+
+A Bíblia tem aproximadamente 1.189 capítulos.
+Para lê-la em 365 dias, a média ideal é de 3 a 4 capítulos por dia
+(cerca de 15 a 25 minutos de leitura).
+
+Abaixo estão os principais tipos de planos, com vantagens e desvantagens.
+
+--------------------------------------------------------------------------------
+1. PLANO CANÔNICO (SEQUENCIAL)
+--------------------------------------------------------------------------------
+Como funciona:
+  Lê do Gênesis ao Apocalipse na ordem em que os livros estão na Bíblia.
+
+Vantagens:
+  - Simples de seguir
+  - Você acompanha a ordem tradicional dos livros
+
+Desvantagens:
+  - Fica vários meses só no Antigo Testamento (pode cansar)
+  - Passa muito tempo em livros históricos e de leis
+
+Média: cerca de 3,2 a 3,5 capítulos por dia.
+
+--------------------------------------------------------------------------------
+2. PLANO CRONOLÓGICO
+--------------------------------------------------------------------------------
+Como funciona:
+  Lê os textos na ordem em que os eventos aconteceram historicamente
+  (ex.: alguns Salmos e Profetas intercalados com os livros históricos).
+
+Vantagens:
+  - Ajuda a entender a história bíblica como um todo
+  - Conecta melhor os acontecimentos
+
+Desvantagens:
+  - Um pouco mais complexo de acompanhar sem um plano impresso ou app
+  - Alguns livros ficam "quebrados"
+
+Recomendado para quem quer compreender o panorama completo da Bíblia.
+
+--------------------------------------------------------------------------------
+3. PLANO MISTO (AT + NT TODOS OS DIAS)  ★ RECOMENDADO PARA A MAIORIA
+--------------------------------------------------------------------------------
+Como funciona:
+  Todo dia você lê trechos do Antigo e do Novo Testamento.
+
+Exemplos de estrutura:
+  - 2 capítulos do AT + 1–2 do NT
+  - 3 do AT + 1 do NT + 1 Salmo/Provérbio
+
+Vantagens:
+  - Mais equilibrado
+  - Evita o cansaço de ficar só no Antigo Testamento por meses
+  - Você tem contato diário com os Evangelhos e cartas
+
+Este é o estilo mais usado em apps como YouVersion e pela Sociedade Bíblica do Brasil.
+
+--------------------------------------------------------------------------------
+4. PLANO M’CHEYNE (clássico desde 1842)
+--------------------------------------------------------------------------------
+Como funciona:
+  4 leituras por dia (cerca de 4 capítulos no total).
+
+Resultado no final do ano:
+  - Novo Testamento  → 2 vezes
+  - Salmos           → 2 vezes
+  - Resto do Antigo Testamento → 1 vez
+
+Vantagens:
+  - Muito equilibrado
+  - Você não fica preso em um só tipo de literatura por muito tempo
+  - É um dos planos mais antigos e testados da história da igreja
+
+Média: cerca de 4 capítulos por dia (~20 minutos).
+
+--------------------------------------------------------------------------------
+5. PLANO COM SALMOS E PROVÉRBIOS
+--------------------------------------------------------------------------------
+Como funciona:
+  Lê a Bíblia na ordem normal + 1 capítulo de Salmos ou Provérbios todos os dias.
+
+Resultado:
+  - Bíblia completa 1 vez
+  - Salmos e Provérbios 2 vezes
+
+É o modelo usado por vários sites brasileiros (ex.: Bíblia On).
+
+--------------------------------------------------------------------------------
+QUAL ESCOLHER?
+--------------------------------------------------------------------------------
+
+Objetivo                              | Melhor plano
+--------------------------------------|---------------------------
+Simplicidade máxima                   | Canônico (sequencial)
+Entender a história bíblica           | Cronológico
+Equilíbrio e menos desistência        | Misto (AT + NT) ★
+Leitura mais profunda e clássica      | M’Cheyne
+Querer ler Salmos/Provérbios mais     | Plano com Salmos
+
+--------------------------------------------------------------------------------
+DICAS PARA NÃO DESISTIR
+--------------------------------------------------------------------------------
+1. Escolha um horário fixo (ex.: de manhã ou antes de dormir).
+2. Use um app (YouVersion, Bíblia Sagrada, etc.) ou imprima o plano.
+3. Se perder um dia, não tente recuperar tudo de uma vez — apenas continue.
+4. Leia com oração e, se possível, anote um versículo que falou com você.
+5. Considere ler em voz alta ou ouvir o áudio da Bíblia em alguns dias.
+
+--------------------------------------------------------------------------------
+OBSERVAÇÃO
+--------------------------------------------------------------------------------
+Este arquivo contém a descrição dos principais planos.
+Se quiser, posso gerar um plano diário completo (dia a dia) de qualquer
+um deles em formato .txt, .json ou .db para uso no seu app.
+
+================================================================================

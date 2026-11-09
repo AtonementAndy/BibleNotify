@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Color x:Key="Primary">#37B6E9</Color>
+    <Color x:Key="PrimaryTextLight">#187EA7</Color>
+    <Color x:Key="Secondary">#353F54</Color>
+    <Color x:Key="SecondaryTextLight">#35465D</Color>
+    <Color x:Key="SecondaryTextDark">#37B6E9</Color>
+    <Color x:Key="Accent">#4B4CED</Color>
+    <Color x:Key="OnPrimary">#FFFFFF</Color>
+
+    <Color x:Key="CanvasLight">#F3F5FA</Color>
+    <Color x:Key="SurfaceLight">#FFFFFF</Color>
+    <Color x:Key="SurfaceRaisedLight">#E7EBF3</Color>
+    <Color x:Key="TextLight">#222834</Color>
+    <Color x:Key="MutedLight">#657187</Color>
+    <Color x:Key="BorderLight">#D6DCE7</Color>
+
+    <Color x:Key="CanvasDark">#222834</Color>
+    <Color x:Key="SurfaceDark">#242C3B</Color>
+    <Color x:Key="SurfaceRaisedDark">#353F54</Color>
+    <Color x:Key="TextDark">#F4F6FC</Color>
+    <Color x:Key="MutedDark">#AAB4C5</Color>
+    <Color x:Key="BorderDark">#353F54</Color>
+
+    <Color x:Key="GlassSurfaceLight">#E6FFFFFF</Color>
+    <Color x:Key="GlassSurfaceDark">#B3242C3B</Color>
+    <Color x:Key="GlassBorderLight">#5037B6E9</Color>
+    <Color x:Key="GlassBorderDark">#4037B6E9</Color>
+    <Color x:Key="GlassInputLight">#D9FFFFFF</Color>
+    <Color x:Key="GlassInputDark">#66353F54</Color>
+    <Color x:Key="GuestButtonBorderLight">#8037B6E9</Color>
+    <Color x:Key="GuestButtonBorderDark">#6037B6E9</Color>
+
+    <SolidColorBrush x:Key="TransparentButtonBackground" Color="#00000000" />
+    <SolidColorBrush x:Key="QuietButtonBackgroundLight" Color="#E7EBF3" />
+    <SolidColorBrush x:Key="QuietButtonBackgroundDark" Color="#353F54" />
+
+    <Color x:Key="Success">#52C7A0</Color>
+    <Color x:Key="Warning">#37B6E9</Color>
+    <Color x:Key="Error">#FF6B78</Color>
+
+    <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#37B6E9" Offset="0" />
+        <GradientStop Color="#4B4CED" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="FeatureGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#353F54" Offset="0" />
+        <GradientStop Color="#242C3B" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="PageBackgroundLight" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F3F5FA" Offset="0" />
+        <GradientStop Color="#E4EAF4" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="PageBackgroundDark" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#242C3B" Offset="0" />
+        <GradientStop Color="#1C2432" Offset="1" />
+    </LinearGradientBrush>
+
+</ResourceDictionary>

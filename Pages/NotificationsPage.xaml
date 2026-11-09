@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    x:Class="BibleNotify.Pages.NotificationsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:BibleNotify.Localization"
+    x:DataType="ContentPage"
+    Title="{localization:Translate Key='Avisos'}">
+
+    <Grid RowDefinitions="Auto,*" RowSpacing="24">
+        <VerticalStackLayout Spacing="6">
+            <Label
+                Text="{localization:Translate Key='Lembretes que acolhem.'}"
+                FontFamily="OpenSansSemibold"
+                FontSize="26"
+                SemanticProperties.HeadingLevel="Level1" />
+            <Label
+                Text="{localization:Translate Key='Uma pausa para estar com a Palavra.'}"
+                FontSize="14"
+                TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+        </VerticalStackLayout>
+
+        <Border
+            Grid.Row="1"
+            Padding="24"
+            VerticalOptions="Start"
+            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
+            Stroke="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 26">
+            <VerticalStackLayout Spacing="12">
+                <Label
+                    Text="{localization:Translate Key='NOTIFICAÇÕES'}"
+                    FontFamily="OpenSansSemibold"
+                    FontSize="11"
+                    CharacterSpacing="1.5"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
+                <Label
+                    Text="{localization:Translate Key='Os lembretes serão configurados na próxima etapa.'}"
+                    FontFamily="OpenSansSemibold"
+                    FontSize="19" />
+                <Label
+                    Text="{localization:Translate Key='O agendamento local e as permissões do aparelho serão implementados antes de ativar os avisos.'}"
+                    FontSize="14"
+                    LineHeight="1.3"
+                    TextColor="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>
