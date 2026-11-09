@@ -187,85 +187,50 @@
                 </VerticalStackLayout>
             </Grid>
 
-                    <VerticalStackLayout Grid.Row="1" Spacing="8">
-            
-            <!-- Mensagem de Erro (Simples, sem conversor) -->
-            <Label
-                Text="{Binding ErrorMessage}"
-                TextColor="{StaticResource Error}"
-                FontSize="13"
-                HorizontalTextAlignment="Center" />
-
-            <!-- BOTÃO PRINCIPAL COM GRADIENTE E SOMBRA -->
-            <Border StrokeThickness="0" 
-                    StrokeShape="RoundRectangle 18" 
-                    HeightRequest="54"
-                    Margin="0,10,0,0">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#37B6E9" Offset="0.0" />
-                        <GradientStop Color="#4B4CED" Offset="1.0" />
-                    </LinearGradientBrush>
-                </Border.Background>
-                
-                <Border.Shadow>
-                    <Shadow Brush="#4B4CED" Offset="0,6" Radius="12" Opacity="0.5" />
-                </Border.Shadow>
-
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding SubmitCommand}" />
-                </Border.GestureRecognizers>
-
-                <Grid>
-                    <!-- Spinner dentro do botão -->
-                    <ActivityIndicator IsRunning="{Binding IsBusy}" 
-                                       IsVisible="{Binding IsBusy}" 
-                                       Color="White" 
-                                       HorizontalOptions="Center" 
-                                       VerticalOptions="Center" />
-                    
-                    <!-- Texto do Botão -->
-                    <Label Text="{Binding SubmitButtonText}" 
-                           TextColor="White" 
-                           FontAttributes="Bold" 
-                           FontSize="15" 
-                           HorizontalOptions="Center" 
-                           VerticalOptions="Center" 
-                           IsVisible="{Binding IsNotBusy}" />
-                </Grid>
-            </Border>
-
-            <!-- BOTÃO DE ALTERNAR MODO (Criar Conta / Entrar) -->
-            <Button
-                Text="{Binding ModeSwitchText}"
-                Command="{Binding ToggleModeCommand}"
-                BackgroundColor="Transparent"
-                TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
-                MinimumHeightRequest="40"
-                CornerRadius="14"
-                FontSize="14"
-                Padding="12,6" />
-
-            <!-- BOTÃO CONVIDADO (Borda sutil) -->
-            <Border Padding="0" 
-                    BackgroundColor="{AppThemeBinding Light={StaticResource GlassSurfaceLight}, Dark={StaticResource GlassSurfaceDark}}" 
-                    Stroke="{AppThemeBinding Light={StaticResource GuestButtonBorderLight}, Dark={StaticResource GuestButtonBorderDark}}"
+            <VerticalStackLayout Grid.Row="1"
+                    Spacing="8">
+                <Label
+                    Text="{Binding ErrorMessage}"
+                    TextColor="{StaticResource Error}"
+                    FontSize="13"/>
+                <ActivityIndicator
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    Color="{StaticResource Primary}"/>
+                <Button
+                    Text="{Binding SubmitButtonText}"
+                    IsVisible="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                    Command="{Binding SubmitCommand}"
+                    MinimumHeightRequest="54"
+                    CornerRadius="18"
+                    FontSize="15"/>
+                <Button
+                    Text="{Binding ModeSwitchText}"
+                    Command="{Binding ToggleModeCommand}"
+                    Background="{StaticResource TransparentButtonBackground}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}"
+                    MinimumHeightRequest="40"
+                    CornerRadius="14"
+                    FontSize="14"
+                    Padding="12,6"/>
+                <Border
+                    Padding="0"
+                    BackgroundColor="#242C3B"
+                    Stroke="#4B4CED"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 18"
                     HeightRequest="50">
-                
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ContinueAsGuestCommand}" />
-                </Border.GestureRecognizers>
-
-                <Label Text="{localization:Translate Key='Continuar sem conta'}" 
-                       TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}" 
-                       HorizontalOptions="Center" 
-                       VerticalOptions="Center" 
-                       FontSize="15" />
-            </Border>
-            
-        </VerticalStackLayout>
+                    <Button
+                        Text="{localization:Translate Key='Continuar sem conta'}"
+                        Command="{Binding ContinueAsGuestCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource QuietButtonBackgroundLight}, Dark={StaticResource QuietButtonBackgroundDark}}"
+                        TextColor="{AppThemeBinding Light={StaticResource TextLight}, Dark={StaticResource TextDark}}"
+                        MinimumHeightRequest="50"
+                        CornerRadius="18"
+                        FontSize="15"
+                        SemanticProperties.Hint="{localization:Translate Key='Abre o aplicativo em modo sem conta e prepara a Bíblia offline'}"/>
+                </Border>
+            </VerticalStackLayout>
         </Grid>
     </ScrollView>
 
