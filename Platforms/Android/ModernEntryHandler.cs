@@ -27,8 +27,12 @@ public sealed class ModernEntryHandler : EntryHandler
         platformView.SetBackgroundResource(0);
         platformView.Background = null;
         platformView.BackgroundTintList = null;
-        var horizontalPadding = (int)(12 * platformView.Resources!.DisplayMetrics!.Density + 0.5f);
-        platformView.SetPadding(horizontalPadding, 0, horizontalPadding, 0);
+        var displayMetrics = platformView.Resources?.DisplayMetrics;
+        if (displayMetrics is not null)
+        {
+            var horizontalPadding = (int)(12 * displayMetrics.Density + 0.5f);
+            platformView.SetPadding(horizontalPadding, 0, horizontalPadding, 0);
+        }
         platformView.Gravity = AndroidGravity.CenterVertical;
     }
 }

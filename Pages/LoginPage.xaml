@@ -72,7 +72,7 @@
                         <Image
                             Source="brand_mark.png"
                             Aspect="AspectFit"
-                            SemanticProperties.Description="Símbolo do Bible Notify" />
+                            SemanticProperties.Description="{localization:Translate Key='Símbolo do Bible Notify'}" />
                     </Border>
                     <HorizontalStackLayout
                         Spacing="6"

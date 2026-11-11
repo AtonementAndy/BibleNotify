@@ -14,7 +14,7 @@ public sealed class ReminderReceiver : BroadcastReceiver
     public const string TitleKey = "reminder-title";
     public const string MessageKey = "reminder-message";
     public const string IsDefaultKey = "reminder-is-default";
-    private const string ChannelId = "bible-reading";
+    private const string DefaultChannelId = "bible-reading";
 
     public override void OnReceive(Context? context, Intent? intent)
     {
@@ -24,6 +24,7 @@ public sealed class ReminderReceiver : BroadcastReceiver
             return;
         }
 
+        var channelId = Localizer.IsSpanish ? $"{DefaultChannelId}-es" : DefaultChannelId;
         var receiverContext = context!;
         var receiverIntent = intent!;
         var reminder = ReminderAlarmScheduler.Load(receiverContext)
@@ -51,12 +52,12 @@ public sealed class ReminderReceiver : BroadcastReceiver
         {
             var platformManager = (NotificationManager?)receiverContext.GetSystemService(Context.NotificationService);
             platformManager?.CreateNotificationChannel(new NotificationChannel(
-                ChannelId,
+                channelId,
                 Localizer.Get("Lembretes de leitura"),
                 NotificationImportance.Default));
         }
 
-        var notificationBuilder = new NotificationCompat.Builder(receiverContext, ChannelId);
+        var notificationBuilder = new NotificationCompat.Builder(receiverContext, channelId);
         if (notificationBuilder is null)
         {
             return;

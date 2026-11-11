@@ -580,7 +580,7 @@ public partial class SettingsViewModel(
         {
             if (!await reminderNotifier.RequestPermissionAsync())
             {
-                ErrorMessage = Localizer.Get("Conceda as permissões de notificações e alarmes exatos e toque novamente em ativar.");
+                ErrorMessage = Localizer.Get("Conceda a permissão de notificações e toque novamente em ativar.");
                 return;
             }
 

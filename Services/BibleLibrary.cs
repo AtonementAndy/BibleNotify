@@ -37,7 +37,7 @@ public sealed class BibleLibrary : IBibleLibrary
     private readonly HttpClient _httpClient;
     private readonly SemaphoreSlim _initializationGate = new(1, 1);
     private readonly SemaphoreSlim _onlineRequestGate = new(1, 1);
-    private readonly ConcurrentDictionary<(int BookId, int Chapter), IReadOnlyList<BibleVerse>> _englishChapters = new();
+    private readonly ConcurrentDictionary<(int BookId, int Chapter), IReadOnlyList<BibleVerse>> _onlineChapters = new();
     private string? _databasePath;
     private int _verseCount;
     private DateTimeOffset _nextOnlineRequestAt;
@@ -243,6 +243,27 @@ public sealed class BibleLibrary : IBibleLibrary
         if (!Localizer.IsPortuguese)
         {
             var books = await GetBooksAsync(cancellationToken).ConfigureAwait(false);
+            if (Localizer.IsSpanish)
+            {
+                var attempts = excludedVerseId.HasValue ? RandomVerseAttempts : 1;
+                for (var attempt = 0; attempt < attempts; attempt++)
+                {
+                    var book = books[Random.Shared.Next(books.Count)];
+                    var chapter = Random.Shared.Next(1, book.ChapterCount + 1);
+                    var verses = await GetOnlineChapterAsync(book.BookId, chapter, cancellationToken)
+                        .ConfigureAwait(false);
+                    var candidates = verses
+                        .Where(verse => verse.VerseId != excludedVerseId)
+                        .ToArray();
+                    if (candidates.Length > 0)
+                    {
+                        return candidates[Random.Shared.Next(candidates.Length)];
+                    }
+                }
+
+                return null;
+            }
+
             for (var attempt = 0; attempt < (excludedVerseId.HasValue ? RandomVerseAttempts : 1); attempt++)
             {
                 var response = await GetOnlineDataAsync<OnlineRandomVerseResponse>(
@@ -314,13 +335,16 @@ public sealed class BibleLibrary : IBibleLibrary
             throw new ArgumentOutOfRangeException(nameof(chapter), Localizer.Get("A referência solicitada não está disponível."));
         }
 
-        if (_englishChapters.TryGetValue((book.BookId, chapter), out var cachedChapter))
+        if (_onlineChapters.TryGetValue((book.BookId, chapter), out var cachedChapter))
         {
             return cachedChapter;
         }
 
+        var requestUri = Localizer.IsSpanish
+            ? $"{Uri.EscapeDataString(GetApiBookCode(book.Code))}+{chapter}?translation=rv1909"
+            : $"data/web/{Uri.EscapeDataString(GetApiBookCode(book.Code))}/{chapter}";
         var response = await GetOnlineDataAsync<OnlineChapter>(
-            $"data/web/{Uri.EscapeDataString(GetEnglishBookCode(book.Code))}/{chapter}",
+            requestUri,
             cancellationToken).ConfigureAwait(false);
         if (response.Verses is null || response.Verses.Length == 0)
         {
@@ -332,7 +356,7 @@ public sealed class BibleLibrary : IBibleLibrary
                 ? throw new InvalidDataException("The online Bible service returned an empty verse.")
                 : MapOnlineVerse(book, verse, chapter))
             .ToArray();
-        return _englishChapters.GetOrAdd((book.BookId, chapter), verses);
+        return _onlineChapters.GetOrAdd((book.BookId, chapter), verses);
     }
 
     private async Task<T> GetOnlineDataAsync<T>(string requestUri, CancellationToken cancellationToken)
@@ -371,7 +395,7 @@ public sealed class BibleLibrary : IBibleLibrary
     {
         if (!string.Equals(
                 verse.BookId,
-                GetEnglishBookCode(book.Code),
+                GetApiBookCode(book.Code),
                 StringComparison.OrdinalIgnoreCase) ||
             verse.Chapter < 1 ||
             verse.Chapter > book.ChapterCount ||
@@ -386,7 +410,7 @@ public sealed class BibleLibrary : IBibleLibrary
         return new BibleVerse(verseId, book.BookId, verse.Chapter, verse.Verse, verse.Text);
     }
 
-    private static string GetEnglishBookCode(string localBookCode) =>
+    private static string GetApiBookCode(string localBookCode) =>
         EnglishBookCodeOverrides.GetValueOrDefault(localBookCode, localBookCode);
 
     private sealed record OnlineChapter(

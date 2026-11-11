@@ -59,7 +59,7 @@ public partial class NotesViewModel(
 
     public bool HasNotes => Notes.Count > 0;
 
-    public string AccountGateButtonText => Localizer.Get("Conhecer planos Premium");
+    public string AccountGateButtonText => Localizer.Get(IsGuest ? "Criar conta" : "Seja Premium");
 
     public string AccessMessage => IsGuest
         ? Localizer.Get("Este recurso é exclusivo do Premium. Veja os planos e crie uma conta para continuar.")
@@ -234,7 +234,9 @@ public partial class NotesViewModel(
     }
 
     [RelayCommand]
-    private Task ContinueFromGateAsync() => navigator.NavigateToPremiumAsync();
+    private Task ContinueFromGateAsync() => IsGuest
+        ? navigator.NavigateToRegistrationAsync()
+        : navigator.NavigateToPremiumAsync();
 
     partial void OnNotesChanged(ObservableCollection<BibleNote> value) =>
         OnPropertyChanged(nameof(HasNotes));
@@ -260,6 +262,17 @@ public partial class NotesViewModel(
     {
         OnPropertyChanged(nameof(IsLocked));
         OnPropertyChanged(nameof(FormOpacity));
+        OnPropertyChanged(nameof(EmptyNotesMessage));
+        OnPropertyChanged(nameof(SaveButtonText));
+    }
+
+    partial void OnIsGuestChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsLocked));
+        OnPropertyChanged(nameof(FormOpacity));
+        OnPropertyChanged(nameof(IsAccount));
+        OnPropertyChanged(nameof(AccountGateButtonText));
+        OnPropertyChanged(nameof(AccessMessage));
         OnPropertyChanged(nameof(EmptyNotesMessage));
         OnPropertyChanged(nameof(SaveButtonText));
     }

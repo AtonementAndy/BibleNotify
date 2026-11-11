@@ -14,6 +14,6 @@ public sealed record BibleNote(
     public string Reference => $"{BookName} {Chapter}:{Verse}";
 
     public string UpdatedDateLabel => UpdatedAt.ToString(
-        Localizer.IsPortuguese ? "dd/MM/yyyy" : "M/d/yyyy",
+        Localizer.IsPortuguese || Localizer.IsSpanish ? "dd/MM/yyyy" : "M/d/yyyy",
         System.Globalization.CultureInfo.CurrentCulture);
 }

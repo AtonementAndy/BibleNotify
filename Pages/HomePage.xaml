@@ -3,7 +3,6 @@
     x:Class="BibleNotify.Pages.HomePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:acrylic="clr-namespace:Xe.AcrylicView;assembly=Xe.AcrylicView"
     xmlns:controls="clr-namespace:BibleNotify.Controls"
     xmlns:localization="clr-namespace:BibleNotify.Localization"
     xmlns:vm="clr-namespace:BibleNotify.ViewModels"
@@ -11,11 +10,18 @@
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource CanvasLight}, Dark={StaticResource CanvasDark}}">
 
+    <ContentPage.Resources>
+        <LinearGradientBrush x:Key="HomeActionGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#126C8F" Offset="0" />
+            <GradientStop Color="#3F41C4" Offset="1" />
+        </LinearGradientBrush>
+    </ContentPage.Resources>
+
     <Grid RowDefinitions="*,Auto"
           Background="{AppThemeBinding Light={StaticResource PageBackgroundLight}, Dark={StaticResource PageBackgroundDark}}">
         <ScrollView Grid.Row="0">
-        <Grid Padding="8,16,8,24" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="16">
-            <VerticalStackLayout Grid.Row="0" Spacing="5">
+        <VerticalStackLayout Padding="16,16,16,24" Spacing="16">
+            <VerticalStackLayout Spacing="5">
                 <Label
                     Text="{Binding AccountLabel}"
                     FontFamily="OpenSansSemibold"
@@ -33,9 +39,8 @@
                     SemanticProperties.HeadingLevel="Level1" />
             </VerticalStackLayout>
 
-            <acrylic:AcrylicView
-                Style="{StaticResource AcrylicCard}"
-                Grid.Row="1"
+            <Border
+                Style="{StaticResource ElevatedCard}"
                 IsVisible="{Binding ShowCreateAccount}"
                 Padding="18">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
@@ -54,15 +59,16 @@
                         Grid.Column="1"
                         Text="{localization:Translate Key='Criar conta'}"
                         Command="{Binding CreateAccountCommand}"
-                        Padding="14,10"
-                        MinimumHeightRequest="46"
-                        FontSize="13"
+                        Background="{StaticResource HomeActionGradient}"
+                        Padding="12,8"
+                        MinimumHeightRequest="44"
+                        FontSize="12"
+                        VerticalOptions="Center"
                         SemanticProperties.Hint="{localization:Translate Key='Abre o cadastro de uma nova conta'}" />
                 </Grid>
-            </acrylic:AcrylicView>
+            </Border>
 
             <Border
-                Grid.Row="2"
                 Style="{StaticResource ElevatedCard}"
                 Padding="18">
                 <Grid>
@@ -88,12 +94,12 @@
                         </VerticalStackLayout>
                         <Button
                             Grid.Column="1"
-                            Text="{localization:Translate Key='Premium'}"
+                            Text="{Binding StreakActionText}"
                             Command="{Binding UpgradeCommand}"
                             Padding="12,8"
                             MinimumHeightRequest="44"
                             FontSize="12"
-                            Background="{StaticResource PrimaryGradient}"
+                            Background="{StaticResource HomeActionGradient}"
                             TextColor="{StaticResource OnPrimary}" />
                     </Grid>
                 </Grid>
@@ -101,7 +107,6 @@
 
             <Border
                 Style="{StaticResource ElevatedCard}"
-                Grid.Row="3"
                 IsVisible="{Binding ShowPremiumPlanCard}"
                 Padding="18">
                 <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="6">
@@ -132,6 +137,7 @@
                         Grid.Row="2"
                         Text="{Binding PremiumPlanActionText}"
                         Command="{Binding OpenReadingPlanCommand}"
+                        Background="{StaticResource HomeActionGradient}"
                         Padding="12,8"
                         MinimumHeightRequest="42"
                         FontSize="12" />
@@ -139,7 +145,6 @@
             </Border>
 
             <Border
-                Grid.Row="4"
                 Padding="24"
                 Background="{StaticResource FeatureGradient}"
                 StrokeThickness="0"
@@ -169,7 +174,7 @@
                         Text="{localization:Translate Key='Ler capítulo'}"
                         Command="{Binding ReadDailyVerseCommand}"
                         HorizontalOptions="Start"
-                        BackgroundColor="{StaticResource Primary}"
+                        Background="{StaticResource HomeActionGradient}"
                         TextColor="{StaticResource OnPrimary}"
                         SemanticProperties.Hint="{localization:Translate Key='Abre a leitura da Bíblia armazenada no aparelho'}" />
                 </Grid>
@@ -177,7 +182,6 @@
 
             <Border
                 Style="{StaticResource ElevatedCard}"
-                Grid.Row="5"
                 Padding="18">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="4" VerticalOptions="Center"
@@ -195,6 +199,7 @@
                         Grid.Column="1"
                         Text="{Binding NotesActionText}"
                         Command="{Binding OpenNotesCommand}"
+                        Background="{StaticResource HomeActionGradient}"
                         Padding="16,10"
                         MinimumHeightRequest="44"
                         FontSize="13"
@@ -203,11 +208,10 @@
             </Border>
 
             <Label
-                Grid.Row="6"
                 Text="{Binding ErrorMessage}"
                 TextColor="{StaticResource Error}"
                 FontSize="13" />
-        </Grid>
+        </VerticalStackLayout>
         </ScrollView>
         <controls:FloatingTabBar Grid.Row="1" SelectedTab="home" />
     </Grid>

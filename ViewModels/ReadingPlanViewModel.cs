@@ -56,9 +56,7 @@ public partial class ReadingPlanViewModel(
             ? Localizer.Get("Continuar plano")
             : Localizer.Get("Usar este plano");
 
-    public string UpgradeButtonText => IsGuest
-        ? Localizer.Get("Criar conta e conhecer o Premium")
-        : Localizer.Get("Ver prévia Premium");
+    public string UpgradeButtonText => Localizer.Get(IsGuest ? "Criar conta" : "Seja Premium");
 
     [RelayCommand]
     private async Task LoadAsync()
@@ -75,19 +73,32 @@ public partial class ReadingPlanViewModel(
         InfoMessage = null;
         try
         {
-            SetPlans(await userData.GetReadingPlansAsync());
-            Days = IsPremium
-                ? new ObservableCollection<PlanDay>(await userData.GetCurrentPlanDaysAsync())
-                : [];
+            if (IsPremium)
+            {
+                SetPlans(await userData.GetReadingPlansAsync());
+                Days = new ObservableCollection<PlanDay>(await userData.GetCurrentPlanDaysAsync());
+            }
+            else
+            {
+                Plans = [];
+                SelectedPlan = null;
+                Days = [];
+            }
+
             OnPropertyChanged(nameof(HasPlan));
         }
         catch (UnauthorizedAccessException)
         {
             IsGuest = true;
+            IsPremium = false;
+            Plans = [];
+            SelectedPlan = null;
+            Days = [];
             OnPropertyChanged(nameof(IsAccount));
             OnPropertyChanged(nameof(IsFreeAccount));
             OnPropertyChanged(nameof(IsPremiumLocked));
             OnPropertyChanged(nameof(UpgradeButtonText));
+            OnPropertyChanged(nameof(HasPlan));
         }
         catch (SqliteException exception)
         {
@@ -179,6 +190,12 @@ public partial class ReadingPlanViewModel(
     [RelayCommand]
     private async Task OpenDayAsync(PlanDay day)
     {
+        if (!IsPremium)
+        {
+            await UpgradeAsync();
+            return;
+        }
+
         await navigator.NavigateToBibleAsync(day.BookId, day.Chapter);
     }
 
@@ -187,7 +204,7 @@ public partial class ReadingPlanViewModel(
     {
         if (!IsPremium)
         {
-            InfoMessage = Localizer.Get("Marcar o progresso do plano é um benefício Premium.");
+            await UpgradeAsync();
             return;
         }
 
@@ -223,7 +240,9 @@ public partial class ReadingPlanViewModel(
         () => Shell.Current.GoToAsync("//main/settings"));
 
     [RelayCommand]
-    private Task UpgradeAsync() => navigator.NavigateToPremiumAsync();
+    private Task UpgradeAsync() => IsGuest
+        ? navigator.NavigateToRegistrationAsync()
+        : navigator.NavigateToPremiumAsync();
 
     private async Task LoadCoreAsync()
     {
@@ -260,6 +279,13 @@ public partial class ReadingPlanViewModel(
         OnPropertyChanged(nameof(IsFreeAccount));
         OnPropertyChanged(nameof(IsPremiumLocked));
         OnPropertyChanged(nameof(SelectedPlanActionText));
+    }
+
+    partial void OnIsGuestChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsAccount));
+        OnPropertyChanged(nameof(IsFreeAccount));
+        OnPropertyChanged(nameof(UpgradeButtonText));
     }
 
     partial void OnSelectedPlanChanged(ReadingPlan? value)

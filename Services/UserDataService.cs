@@ -4,6 +4,7 @@ using BibleNotify.Data.Models;
 using BibleNotify.Localization;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Storage;
 
 namespace BibleNotify.Services;
 
@@ -23,6 +24,7 @@ public sealed class UserDataService(
     private const int MaximumReminderTitleLength = 100;
     private const int MaximumReminderMessageLength = 1000;
     private static readonly string DatabasePath = Path.Combine(FileSystem.AppDataDirectory, "user-data.db");
+    private const string DatabaseEncryptionKeyName = "user-data-encryption-key";
     private static readonly (string Title, string Message, int Hour, int Minute)[] PortugueseDefaultReminders =
     [
         ("Momento da manhã", "Comece o dia com alguns minutos na Palavra.", 8, 0),
@@ -33,7 +35,13 @@ public sealed class UserDataService(
         ("Morning reflection", "Start your day with a few minutes in the Word.", 8, 0),
         ("Time to reflect", "Set aside a moment to read the Bible.", 18, 0)
     ];
+    private static readonly (string Title, string Message, int Hour, int Minute)[] SpanishDefaultReminders =
+    [
+        ("Un momento por la mañana", "Comienza el día dedicando unos minutos a la Palabra.", 8, 0),
+        ("Pausa para reflexionar", "Reserva un momento para leer la Biblia.", 18, 0)
+    ];
     private readonly SemaphoreSlim _initializationGate = new(1, 1);
+    private string? _databaseEncryptionKey;
     private bool _initialized;
 
     public event EventHandler? SessionChanged;
@@ -758,7 +766,8 @@ public sealed class UserDataService(
 
             await Task.Run(static () => { }, cancellationToken).ConfigureAwait(false);
             Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
-            await using var connection = CreateConnection();
+            await EnsureDatabaseEncryptionAsync(cancellationToken).ConfigureAwait(false);
+            await using var connection = CreateConnection(DatabasePath, _databaseEncryptionKey);
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using var command = connection.CreateCommand();
             command.CommandText = """
@@ -920,7 +929,7 @@ public sealed class UserDataService(
     private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken)
     {
         await EnsureInitializedAsync(cancellationToken).ConfigureAwait(false);
-        var connection = CreateConnection();
+        var connection = CreateConnection(DatabasePath, _databaseEncryptionKey);
         await Task.Run(connection.Open, cancellationToken).ConfigureAwait(false);
         await using var foreignKeys = connection.CreateCommand();
         foreignKeys.CommandText = "PRAGMA foreign_keys = ON;";
@@ -928,8 +937,140 @@ public sealed class UserDataService(
         return connection;
     }
 
-    private static SqliteConnection CreateConnection() =>
-        new(new SqliteConnectionStringBuilder { DataSource = DatabasePath }.ToString());
+    private async Task EnsureDatabaseEncryptionAsync(CancellationToken cancellationToken)
+    {
+        var encryptionKey = await SecureStorage.Default
+            .GetAsync(DatabaseEncryptionKeyName)
+            .ConfigureAwait(false);
+        var databaseExists = File.Exists(DatabasePath);
+
+        if (databaseExists)
+        {
+            if (!string.IsNullOrWhiteSpace(encryptionKey) &&
+                await IsDatabaseReadableAsync(DatabasePath, encryptionKey, cancellationToken).ConfigureAwait(false))
+            {
+                _databaseEncryptionKey = encryptionKey;
+                return;
+            }
+
+            if (!await IsDatabaseReadableAsync(DatabasePath, null, cancellationToken).ConfigureAwait(false))
+            {
+                throw new InvalidDataException(
+                    "The local account database cannot be opened with its stored encryption key or as a legacy database.");
+            }
+
+            encryptionKey ??= Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            await SecureStorage.Default
+                .SetAsync(DatabaseEncryptionKeyName, encryptionKey)
+                .ConfigureAwait(false);
+            await MigratePlaintextDatabaseAsync(encryptionKey, cancellationToken).ConfigureAwait(false);
+            _databaseEncryptionKey = encryptionKey;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(encryptionKey))
+        {
+            encryptionKey = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            await SecureStorage.Default
+                .SetAsync(DatabaseEncryptionKeyName, encryptionKey)
+                .ConfigureAwait(false);
+        }
+
+        _databaseEncryptionKey = encryptionKey;
+    }
+
+    private async Task MigratePlaintextDatabaseAsync(
+        string encryptionKey,
+        CancellationToken cancellationToken)
+    {
+        var migrationPath = DatabasePath + ".encrypted-migration";
+        DeleteMigrationFiles(migrationPath);
+
+        await using (var connection = CreateConnection(DatabasePath, null))
+        {
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            if (!await IsConnectionReadableAsync(connection, cancellationToken).ConfigureAwait(false))
+            {
+                throw new InvalidDataException("The legacy local account database failed its integrity check.");
+            }
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                ATTACH DATABASE $databasePath AS encrypted KEY $encryptionKey;
+                SELECT sqlcipher_export('encrypted');
+                DETACH DATABASE encrypted;
+                """;
+            command.Parameters.AddWithValue("$databasePath", migrationPath);
+            command.Parameters.AddWithValue("$encryptionKey", encryptionKey);
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (!await IsDatabaseReadableAsync(migrationPath, encryptionKey, cancellationToken).ConfigureAwait(false))
+        {
+            throw new InvalidDataException("The encrypted local account database failed its integrity check.");
+        }
+
+        File.Move(migrationPath, DatabasePath, overwrite: true);
+        logger.LogInformation("Encrypted the existing local account database.");
+    }
+
+    private static async Task<bool> IsDatabaseReadableAsync(
+        string databasePath,
+        string? encryptionKey,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var connection = CreateConnection(
+                databasePath,
+                encryptionKey,
+                SqliteOpenMode.ReadOnly);
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            return await IsConnectionReadableAsync(connection, cancellationToken).ConfigureAwait(false);
+        }
+        catch (SqliteException)
+        {
+            return false;
+        }
+    }
+
+    private static async Task<bool> IsConnectionReadableAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA quick_check;";
+        var result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return string.Equals(result as string, "ok", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void DeleteMigrationFiles(string migrationPath)
+    {
+        if (File.Exists(migrationPath))
+        {
+            File.Delete(migrationPath);
+        }
+
+        var journalPath = migrationPath + "-journal";
+        if (File.Exists(journalPath))
+        {
+            File.Delete(journalPath);
+        }
+    }
+
+    private static SqliteConnection CreateConnection(
+        string databasePath,
+        string? encryptionKey,
+        SqliteOpenMode mode = SqliteOpenMode.ReadWriteCreate)
+    {
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = databasePath,
+            Mode = mode,
+            Password = encryptionKey
+        };
+        return new SqliteConnection(connectionString.ToString());
+    }
 
     private async Task ExecuteUserCommandAsync(
         string sql,
@@ -971,7 +1112,11 @@ public sealed class UserDataService(
     }
 
     private static (string Title, string Message, int Hour, int Minute)[] GetDefaultReminders() =>
-        Localizer.IsPortuguese ? PortugueseDefaultReminders : EnglishDefaultReminders;
+        Localizer.IsPortuguese
+            ? PortugueseDefaultReminders
+            : Localizer.IsSpanish
+                ? SpanishDefaultReminders
+                : EnglishDefaultReminders;
 
     private static PrayerReminder LocalizeDefaultReminder(PrayerReminder reminder)
     {
@@ -983,14 +1128,15 @@ public sealed class UserDataService(
         var currentDefaults = GetDefaultReminders();
         for (var index = 0; index < currentDefaults.Length; index++)
         {
-            var portuguese = PortugueseDefaultReminders[index];
-            var english = EnglishDefaultReminders[index];
-            var previouslyLocalizedEnglish =
-                (Title: Localizer.Get(portuguese.Title), Message: Localizer.Get(portuguese.Message));
-            if ((reminder.Title == portuguese.Title && reminder.Message == portuguese.Message) ||
-                (reminder.Title == english.Title && reminder.Message == english.Message) ||
-                (reminder.Title == previouslyLocalizedEnglish.Title &&
-                 reminder.Message == previouslyLocalizedEnglish.Message))
+            var knownDefaults = new[]
+            {
+                PortugueseDefaultReminders[index],
+                EnglishDefaultReminders[index],
+                SpanishDefaultReminders[index]
+            };
+            if (knownDefaults.Any(defaultReminder =>
+                reminder.Title == defaultReminder.Title &&
+                reminder.Message == defaultReminder.Message))
             {
                 return reminder with
                 {

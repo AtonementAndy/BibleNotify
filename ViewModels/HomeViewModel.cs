@@ -70,10 +70,19 @@ public partial class HomeViewModel(
         ? Localizer.Get("Guarde reflexões e versículos importantes.")
         : Localizer.Get("Desbloqueie o Premium para escrever e salvar suas reflexões.");
 
-    public string NotesActionText => Localizer.Get(ShowPremiumStreak ? "Abrir" : "Premium");
+    public string AccountGateButtonText => Localizer.Get(userData.IsGuestSession ? "Criar conta" : "Premium");
 
-    public string NotesActionHint => Localizer.Get(
-        ShowPremiumStreak ? "Abre suas anotações bíblicas" : "Abre as opções Premium");
+    public string StreakActionText => AccountGateButtonText;
+
+    public string NotesActionText => ShowPremiumStreak
+        ? Localizer.Get("Abrir")
+        : AccountGateButtonText;
+
+    public string NotesActionHint => Localizer.Get(ShowPremiumStreak
+        ? "Abre suas anotações bíblicas"
+        : userData.IsGuestSession
+            ? "Abre o cadastro de uma nova conta"
+            : "Abre as opções Premium");
 
     public string StreakUpgradeMessage => userData.IsGuestSession
         ? Localizer.Get("Acompanhe seus dias consecutivos com uma conta Premium.")
@@ -203,14 +212,18 @@ public partial class HomeViewModel(
     [RelayCommand]
     private Task OpenNotesAsync() => userData.HasPremiumAccess
         ? navigator.NavigateToNotesAsync()
-        : navigator.NavigateToPremiumAsync();
+        : userData.IsGuestSession
+            ? navigator.NavigateToRegistrationAsync()
+            : navigator.NavigateToPremiumAsync();
 
     [RelayCommand]
     private Task OpenReadingPlanAsync() => MainThread.InvokeOnMainThreadAsync(
         () => Shell.Current.GoToAsync("//main/plans"));
 
     [RelayCommand]
-    private Task UpgradeAsync() => navigator.NavigateToPremiumAsync();
+    private Task UpgradeAsync() => userData.IsGuestSession
+        ? navigator.NavigateToRegistrationAsync()
+        : navigator.NavigateToPremiumAsync();
 
     [RelayCommand]
     private Task CreateAccountAsync() => navigator.NavigateToRegistrationAsync();
@@ -219,9 +232,13 @@ public partial class HomeViewModel(
     {
         var user = userData.CurrentUser;
         ShowPremiumStreak = userData.HasPremiumAccess;
-        ShowCreateAccount = userData.IsGuestSession;
+        ShowCreateAccount = userData.IsGuestSession && user is null;
         OnPropertyChanged(nameof(IsStreakLocked));
         OnPropertyChanged(nameof(StreakUpgradeMessage));
+        OnPropertyChanged(nameof(AccountGateButtonText));
+        OnPropertyChanged(nameof(StreakActionText));
+        OnPropertyChanged(nameof(NotesActionText));
+        OnPropertyChanged(nameof(NotesActionHint));
         if (user is null)
         {
             Greeting = userData.IsGuestSession

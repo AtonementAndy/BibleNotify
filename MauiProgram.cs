@@ -15,6 +15,7 @@ public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
 	{
+		SQLitePCL.Batteries_V2.Init();
 		Localizer.ConfigureFromDeviceLanguage();
 
 		var builder = MauiApp.CreateBuilder();

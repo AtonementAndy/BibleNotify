@@ -4,7 +4,8 @@ public sealed class ModernEditor : Editor
 {
     public ModernEditor()
     {
-        HandlerChanged += (_, _) => Dispatcher.Dispatch(RemoveNativeBackground);
+        HandlerChanged += (_, _) => RemoveNativeBackground();
+        Loaded += (_, _) => RemoveNativeBackground();
     }
 
     private void RemoveNativeBackground()
@@ -16,8 +17,12 @@ public sealed class ModernEditor : Editor
                 Android.Graphics.Color.Transparent);
             platformView.BackgroundTintList = Android.Content.Res.ColorStateList.ValueOf(
                 Android.Graphics.Color.Transparent);
-            var padding = (int)(12 * platformView.Resources!.DisplayMetrics!.Density + 0.5f);
-            platformView.SetPadding(padding, padding, padding, padding);
+            var displayMetrics = platformView.Resources?.DisplayMetrics;
+            if (displayMetrics is not null)
+            {
+                var padding = (int)(12 * displayMetrics.Density + 0.5f);
+                platformView.SetPadding(padding, padding, padding, padding);
+            }
             platformView.InputType =
                 Android.Text.InputTypes.ClassText |
                 Android.Text.InputTypes.TextFlagMultiLine |

@@ -23,15 +23,15 @@ public sealed class AndroidReminderNotifier(IUserDataService userData) : IRemind
             }
         }
 
+        var context = Android.App.Application.Context;
         if (OperatingSystem.IsAndroidVersionAtLeast(31) &&
-            Android.App.Application.Context.GetSystemService(Context.AlarmService) is AlarmManager alarmManager &&
+            context.GetSystemService(Context.AlarmService) is AlarmManager alarmManager &&
             !alarmManager.CanScheduleExactAlarms())
         {
             var intent = new Intent(global::Android.Provider.Settings.ActionRequestScheduleExactAlarm)
-                .SetData(Android.Net.Uri.Parse($"package:{Android.App.Application.Context.PackageName}"))
+                .SetData(Android.Net.Uri.Parse($"package:{context.PackageName}"))
                 .SetFlags(ActivityFlags.NewTask);
-            Android.App.Application.Context.StartActivity(intent);
-            return false;
+            context.StartActivity(intent);
         }
 
         return true;
@@ -82,7 +82,6 @@ public sealed class AndroidReminderNotifier(IUserDataService userData) : IRemind
                 reminder.Minute,
                 reminder.IsDefault);
             scheduledReminders.Add(scheduledReminder);
-            ReminderAlarmScheduler.Schedule(context, scheduledReminder, allowCurrentMinute: true);
         }
 
         var staleIds = previousIds
@@ -97,6 +96,10 @@ public sealed class AndroidReminderNotifier(IUserDataService userData) : IRemind
         Preferences.Default.Set(preferenceKey, string.Join(',', activeIds));
         Preferences.Default.Set(notificationsEnabledKey, true);
         ReminderAlarmScheduler.Save(context, scheduledReminders);
+        foreach (var reminder in scheduledReminders)
+        {
+            ReminderAlarmScheduler.Schedule(context, reminder, allowCurrentMinute: true);
+        }
     }
 
     public Task CancelAsync()
