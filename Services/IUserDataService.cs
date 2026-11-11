@@ -14,6 +14,8 @@ public interface IUserDataService
 
     bool IsGuestSession { get; }
 
+    Task<bool> RestoreSessionAsync(CancellationToken cancellationToken = default);
+
     Task RegisterAsync(AccountRegistration registration, CancellationToken cancellationToken = default);
 
     Task<bool> SignInAsync(string email, string password, CancellationToken cancellationToken = default);

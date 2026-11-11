@@ -239,7 +239,7 @@ public static class Localizer
             ["Capítulo"] = "Chapter",
             ["Selecione um livro da Bíblia"] = "Select a book of the Bible",
             ["Selecione o capítulo"] = "Select the chapter",
-            ["Bíblia Livre · leitura offline"] = "World English Bible (WEB) · bible-api.com · Public Domain",
+            ["Bíblia Livre · leitura offline"] = "World English Bible (WEB) · Offline · Public Domain",
             ["Abrindo capítulo..."] = "Opening chapter...",
             ["Anterior"] = "Previous",
             ["Próximo"] = "Next",
@@ -411,6 +411,9 @@ public static class Localizer
             ["Anotação salva, mas não foi possível atualizar a lista."] = "Note saved, but the list could not be refreshed.",
             ["Não foi possível excluir a anotação."] = "Could not delete the note.",
             ["A referência solicitada não está disponível."] = "The requested reference is not available.",
+            ["A referência escolhida não está disponível na Bíblia."] = "The selected reference is not available in the Bible.",
+            ["Escolha um capítulo e versículo disponíveis."] = "Choose an available chapter and verse.",
+            ["Não foi possível carregar as opções de referência. Tente novamente."] = "Could not load the reference options. Try again.",
             ["Este capítulo não está disponível."] = "This chapter is not available.",
             ["Capítulo carregado, mas não foi possível salvar seu progresso."] = "Chapter loaded, but your progress could not be saved.",
             ["Não foi possível carregar a Bíblia offline. Tente novamente."] = "Could not load the offline Bible. Try again.",
@@ -432,8 +435,6 @@ public static class Localizer
             ["Prévia Premium desativada."] = "Premium preview disabled.",
             ["A prévia Premium só fica disponível em compilações de desenvolvimento."] = "The Premium preview is only available in development builds.",
             ["Dia inválido para o plano ativo."] = "Invalid day for the active plan.",
-            ["Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente."] = "Could not load the online Bible. Check your connection and try again.",
-            ["O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde."] = "The Bible service returned invalid data. Please try again later.",
             ["Não foi possível atualizar o nível da conta."] = "Could not update the account level.",
             ["O nível da conta foi atualizado, mas não foi possível atualizar os lembretes."] = "The account level was updated, but reminders could not be refreshed.",
             ["Tema atualizado."] = "Theme updated.",
@@ -542,7 +543,7 @@ public static class Localizer
             ["Capítulo"] = "Capítulo",
             ["Selecione um livro da Bíblia"] = "Selecciona un libro de la Biblia",
             ["Selecione o capítulo"] = "Selecciona el capítulo",
-            ["Bíblia Livre · leitura offline"] = "Reina-Valera 1909 · Bible API · Dominio público",
+            ["Bíblia Livre · leitura offline"] = "Reina-Valera 1909 · sin conexión · Dominio público",
             ["Abrindo capítulo..."] = "Abriendo capítulo...",
             ["Anterior"] = "Anterior",
             ["Próximo"] = "Siguiente",
@@ -714,6 +715,9 @@ public static class Localizer
             ["Anotação salva, mas não foi possível atualizar a lista."] = "La nota se guardó, pero no se pudo actualizar la lista.",
             ["Não foi possível excluir a anotação."] = "No se pudo eliminar la nota.",
             ["A referência solicitada não está disponível."] = "La referencia solicitada no está disponible.",
+            ["A referência escolhida não está disponível na Bíblia."] = "La referencia seleccionada no está disponible en la Biblia.",
+            ["Escolha um capítulo e versículo disponíveis."] = "Elige un capítulo y un versículo disponibles.",
+            ["Não foi possível carregar as opções de referência. Tente novamente."] = "No se pudieron cargar las opciones de referencia. Inténtalo de nuevo.",
             ["Este capítulo não está disponível."] = "Este capítulo no está disponible.",
             ["Capítulo carregado, mas não foi possível salvar seu progresso."] = "El capítulo se cargó, pero no se pudo guardar tu progreso.",
             ["Não foi possível carregar a Bíblia offline. Tente novamente."] = "No se pudo cargar la Biblia. Inténtalo de nuevo.",
@@ -735,8 +739,6 @@ public static class Localizer
             ["Prévia Premium desativada."] = "Vista previa de Premium desactivada.",
             ["A prévia Premium só fica disponível em compilações de desenvolvimento."] = "La vista previa de Premium solo está disponible en versiones de desarrollo.",
             ["Dia inválido para o plano ativo."] = "El día no es válido para el plan activo.",
-            ["Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente."] = "No se pudo cargar la Biblia en línea. Comprueba tu conexión e inténtalo de nuevo.",
-            ["O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde."] = "El servicio de la Biblia devolvió datos no válidos. Inténtalo de nuevo más tarde.",
             ["Não foi possível atualizar o nível da conta."] = "No se pudo actualizar el nivel de la cuenta.",
             ["O nível da conta foi atualizado, mas não foi possível atualizar os lembretes."] = "Se actualizó el nivel de la cuenta, pero no se pudieron actualizar los recordatorios.",
             ["Tema atualizado."] = "Tema actualizado.",
@@ -861,6 +863,9 @@ public static class Localizer
 
     public static bool IsPortuguese =>
         CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("pt", StringComparison.OrdinalIgnoreCase);
+
+    public static string BibleLanguageCode =>
+        IsPortuguese ? "pt-BR" : IsSpanish ? "es" : "en";
 
     public static string Get(string portugueseKey)
     {

@@ -34,19 +34,28 @@
                 <Label Text="{Binding NoteFormTitle}" FontFamily="OpenSansSemibold" FontSize="11" CharacterSpacing="1.5"
                        TextColor="{AppThemeBinding Light={StaticResource PrimaryTextLight}, Dark={StaticResource SecondaryTextDark}}" />
                 <VerticalStackLayout Spacing="10" IsEnabled="{Binding IsPremium}" Opacity="{Binding FormOpacity}">
-                    <Grid ColumnDefinitions="*,82,82" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="1.5*,*,*" ColumnSpacing="8">
                         <Border Style="{StaticResource GlassInputBorder}" Padding="8,0">
                             <controls:ModernPicker
+                                AutomationId="NotesBookPicker"
                                 Title="{localization:Translate Key='Livro'}"
                                 ItemsSource="{Binding Books}"
                                 SelectedItem="{Binding SelectedBook, Mode=TwoWay}"
                                 ItemDisplayBinding="{Binding Name}" />
                         </Border>
                         <Border Grid.Column="1" Style="{StaticResource GlassInputBorder}" Padding="6,0">
-                            <controls:ModernEntry Placeholder="{localization:Translate Key='Cap.'}" Keyboard="Numeric" Text="{Binding SelectedChapter}" HorizontalTextAlignment="Center" />
+                            <controls:ModernPicker
+                                AutomationId="NotesChapterPicker"
+                                Title="{localization:Translate Key='Cap.'}"
+                                ItemsSource="{Binding Chapters}"
+                                SelectedItem="{Binding SelectedChapter, Mode=TwoWay}" />
                         </Border>
                         <Border Grid.Column="2" Style="{StaticResource GlassInputBorder}" Padding="6,0">
-                            <controls:ModernEntry Placeholder="{localization:Translate Key='Vers.'}" Keyboard="Numeric" Text="{Binding SelectedVerse}" HorizontalTextAlignment="Center" />
+                            <controls:ModernPicker
+                                AutomationId="NotesVersePicker"
+                                Title="{localization:Translate Key='Vers.'}"
+                                ItemsSource="{Binding Verses}"
+                                SelectedItem="{Binding SelectedVerse, Mode=TwoWay}" />
                         </Border>
                     </Grid>
                     <Border Padding="12"

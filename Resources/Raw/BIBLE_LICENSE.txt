@@ -1,24 +1,25 @@
-Bíblia Livre (BLIVRE), edição brasileira de fevereiro de 2018
+Textos bíblicos incluídos no banco local do BibleNotify
 
+Português (pt-BR)
+Bíblia Livre (BLIVRE), edição brasileira de fevereiro de 2018.
 Copyright © 2018 Diego Santos, Mario Sérgio e Marco Teles.
 Fonte: https://ebible.org/Scriptures/porbr2018_vpl.zip
-Projeto: https://sites.google.com/site/biblialivre/
 Licença: Creative Commons Atribuição 4.0 Brasil (CC BY 4.0 BR)
 https://creativecommons.org/licenses/by/4.0/br/
+Preserve a atribuição e informe a edição ao redistribuir o texto.
 
-O texto bíblico é distribuído sob CC BY 4.0 BR. A atribuição aos autores e à
-fonte deve ser mantida. A edição utilizada é um trabalho em andamento; a data
-da versão deve ser informada ao redistribuí-la.
+English (en)
+World English Bible Protestant Edition (WEB).
+Fonte: https://ebible.org/Scriptures/engwebp_vpl.zip
+Domínio público. “World English Bible” é marca registrada de eBible.org.
+O texto não foi alterado; somente seu formato de armazenamento foi convertido.
+https://ebible.org/engwebp/copyright.htm
 
-Esta edição foi convertida do formato VPL para um banco SQLite local. O texto
-dos versículos foi preservado; somente a estrutura de armazenamento mudou.
+Español (es)
+Santa Biblia — Reina-Valera 1909.
+Fuente: https://ebible.org/Scriptures/spaRV1909_vpl.zip
+Dominio público.
+https://ebible.org/spaRV1909/copyright.htm
 
-Versão em inglês (consultada online, não empacotada):
-World English Bible (WEB), domínio público.
-API: https://bible-api.com/ (dados e licença: https://bible-api.com/data).
-
-As solicitações online enviam somente o identificador do livro e do capítulo
-(ou pedem um versículo aleatório); nenhum dado de conta, perfil ou anotação é
-incluído. O provedor informa que registra dados técnicos como endereço IP e URL
-por até 30 dias, limita o uso a 15 solicitações por 30 segundos e não garante
-disponibilidade. Consulte os termos e a política do provedor antes de publicar.
+Os três textos são empacotados em Resources/Raw/bible.db e consultados localmente.
+Nenhum serviço remoto de Bíblia é chamado pelo aplicativo.

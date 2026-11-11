@@ -1,18 +1,30 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Sqlite;
 
-if (args.Length != 2)
+if (args.Length != 4)
 {
-    Console.Error.WriteLine("Usage: BibleDatabaseBuilder <vpl-text-file> <output-database>");
+    Console.Error.WriteLine(
+        "Usage: BibleDatabaseBuilder <portuguese-vpl> <english-vpl> <spanish-vpl> <output-database>");
     return 2;
 }
 
-var sourcePath = Path.GetFullPath(args[0]);
-var databasePath = Path.GetFullPath(args[1]);
-if (!File.Exists(sourcePath))
+var translations = new[]
 {
-    Console.Error.WriteLine($"Bible text file not found: {sourcePath}");
-    return 2;
+    new TranslationDefinition("pt-BR", "Bíblia Livre 2018", Path.GetFullPath(args[0])),
+    new TranslationDefinition("en", "World English Bible Protestant Edition", Path.GetFullPath(args[1])),
+    new TranslationDefinition("es", "Reina-Valera 1909", Path.GetFullPath(args[2]))
+};
+var databasePath = Path.GetFullPath(args[3]);
+
+foreach (var translation in translations)
+{
+    if (!File.Exists(translation.SourcePath))
+    {
+        Console.Error.WriteLine(
+            $"The {translation.LanguageCode} VPL source file was not found: {translation.SourcePath}");
+        return 2;
+    }
 }
 
 var books = new[]
@@ -85,171 +97,347 @@ var books = new[]
     new BookDefinition("REV", "Apocalipse", "Novo")
 };
 
-var definitionsByCode = books.ToDictionary(book => book.Code, StringComparer.Ordinal);
-var parsedVerses = new List<VerseData>(31_102);
+var booksByCode = books
+    .Select((book, index) => (book.Code, BookId: index + 1))
+    .ToDictionary(item => item.Code, item => item.BookId, StringComparer.Ordinal);
 var verseLinePattern = new Regex(
-    @"^(?<code>[A-Z0-9]{3}) (?<chapter>\d+):(?<verse>\d+) (?<text>.+)$",
+    @"^(?<code>[A-Z0-9]{3}) (?<chapter>\d+):(?<verse>\d+)(?: (?<text>.*))?$",
     RegexOptions.Compiled | RegexOptions.CultureInvariant);
-var chapterCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+var versesByLanguage = new Dictionary<string, List<VerseData>>(StringComparer.Ordinal);
+var chapterCountsByLanguage = new Dictionary<string, Dictionary<string, int>>(StringComparer.Ordinal);
 
-foreach (var (line, lineNumber) in File.ReadLines(sourcePath).Select((line, index) => (line, index + 1)))
+foreach (var translation in translations)
 {
-    var match = verseLinePattern.Match(line);
-    if (!match.Success)
+    var verses = new List<VerseData>(31_103);
+    var references = new HashSet<VerseReference>();
+    var chapterCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+    var sourceBookCodes = new HashSet<string>(StringComparer.Ordinal);
+
+    foreach (var (line, lineNumber) in File.ReadLines(translation.SourcePath)
+                 .Select((line, index) => (line, index + 1)))
     {
-        Console.Error.WriteLine($"Invalid VPL record at line {lineNumber}.");
+        var match = verseLinePattern.Match(line);
+        if (!match.Success)
+        {
+            Console.Error.WriteLine(
+                $"Invalid {translation.LanguageCode} VPL record at line {lineNumber}.");
+            return 2;
+        }
+
+        var code = match.Groups["code"].Value;
+        if (!booksByCode.TryGetValue(code, out var bookId))
+        {
+            Console.Error.WriteLine(
+                $"Unknown {translation.LanguageCode} Bible book code at line {lineNumber}.");
+            return 2;
+        }
+
+        if (!int.TryParse(match.Groups["chapter"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var chapter) ||
+            !int.TryParse(match.Groups["verse"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var verse) ||
+            chapter is < 1 or > 999 ||
+            verse is < 1 or > 999)
+        {
+            Console.Error.WriteLine(
+                $"Invalid {translation.LanguageCode} chapter or verse number at line {lineNumber}.");
+            return 2;
+        }
+
+        var reference = new VerseReference(bookId, chapter, verse);
+        if (!references.Add(reference))
+        {
+            Console.Error.WriteLine(
+                $"Duplicate {translation.LanguageCode} verse reference at line {lineNumber}.");
+            return 2;
+        }
+
+        var text = match.Groups["text"].Success
+            ? match.Groups["text"].Value.Trim()
+            : string.Empty;
+        verses.Add(new VerseData(reference, text));
+        sourceBookCodes.Add(code);
+        chapterCounts[code] = Math.Max(chapterCounts.GetValueOrDefault(code), chapter);
+    }
+
+    if (verses.Count < 31_000 || sourceBookCodes.Count != books.Length)
+    {
+        Console.Error.WriteLine(
+            $"Unexpected {translation.LanguageCode} coverage: {verses.Count} verses across {sourceBookCodes.Count} books.");
         return 2;
     }
 
-    var code = match.Groups["code"].Value;
-    if (!definitionsByCode.TryGetValue(code, out var book))
+    versesByLanguage.Add(translation.LanguageCode, verses);
+    chapterCountsByLanguage.Add(translation.LanguageCode, chapterCounts);
+}
+
+var portugueseChapterCounts = chapterCountsByLanguage["pt-BR"];
+foreach (var translation in translations.Skip(1))
+{
+    foreach (var book in books)
     {
-        Console.Error.WriteLine($"Unknown Bible book code '{code}' at line {lineNumber}.");
-        return 2;
+        if (chapterCountsByLanguage[translation.LanguageCode].GetValueOrDefault(book.Code) !=
+            portugueseChapterCounts.GetValueOrDefault(book.Code))
+        {
+            Console.Error.WriteLine(
+                $"Chapter coverage for {translation.LanguageCode} does not match the Portuguese reference.");
+            return 2;
+        }
+    }
+}
+
+var allReferences = versesByLanguage.Values
+    .SelectMany(verses => verses)
+    .Select(verse => verse.Reference)
+    .Distinct()
+    .OrderBy(reference => reference.BookId)
+    .ThenBy(reference => reference.Chapter)
+    .ThenBy(reference => reference.Verse)
+    .ToArray();
+var verseIds = allReferences.ToDictionary(reference => reference, GetStableVerseId);
+var temporaryDatabasePath = $"{databasePath}.{Guid.NewGuid():N}.tmp";
+
+try
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
+    using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+    {
+        DataSource = temporaryDatabasePath,
+        Pooling = false
+    }.ToString()))
+    {
+        connection.Open();
+        using (var transaction = connection.BeginTransaction())
+        {
+            using var createTables = connection.CreateCommand();
+            createTables.Transaction = transaction;
+            createTables.CommandText = """
+                PRAGMA foreign_keys = ON;
+                PRAGMA user_version = 2;
+                CREATE TABLE Books (
+                    BookId INTEGER NOT NULL PRIMARY KEY,
+                    Code TEXT NOT NULL UNIQUE,
+                    Name TEXT NOT NULL,
+                    Testament TEXT NOT NULL,
+                    BookOrder INTEGER NOT NULL,
+                    ChapterCount INTEGER NOT NULL
+                );
+                CREATE TABLE BibleTranslations (
+                    LanguageCode TEXT NOT NULL PRIMARY KEY,
+                    TranslationName TEXT NOT NULL,
+                    VerseCount INTEGER NOT NULL CHECK (VerseCount > 0)
+                );
+                CREATE TABLE Verses (
+                    VerseId INTEGER NOT NULL PRIMARY KEY,
+                    BookId INTEGER NOT NULL REFERENCES Books(BookId),
+                    Chapter INTEGER NOT NULL CHECK (Chapter BETWEEN 1 AND 999),
+                    Verse INTEGER NOT NULL CHECK (Verse BETWEEN 1 AND 999),
+                    UNIQUE (BookId, Chapter, Verse)
+                );
+                CREATE TABLE BibleTexts (
+                    LanguageCode TEXT NOT NULL REFERENCES BibleTranslations(LanguageCode),
+                    VerseId INTEGER NOT NULL REFERENCES Verses(VerseId),
+                    Text TEXT NOT NULL,
+                    PRIMARY KEY (LanguageCode, VerseId)
+                );
+                CREATE INDEX IX_Verses_Book_Chapter_Verse
+                    ON Verses (BookId, Chapter, Verse);
+                """;
+            createTables.ExecuteNonQuery();
+
+            using var insertBook = connection.CreateCommand();
+            insertBook.Transaction = transaction;
+            insertBook.CommandText = """
+                INSERT INTO Books (BookId, Code, Name, Testament, BookOrder, ChapterCount)
+                VALUES ($bookId, $code, $name, $testament, $bookOrder, $chapterCount);
+                """;
+            var bookIdParameter = insertBook.Parameters.Add("$bookId", SqliteType.Integer);
+            var codeParameter = insertBook.Parameters.Add("$code", SqliteType.Text);
+            var nameParameter = insertBook.Parameters.Add("$name", SqliteType.Text);
+            var testamentParameter = insertBook.Parameters.Add("$testament", SqliteType.Text);
+            var orderParameter = insertBook.Parameters.Add("$bookOrder", SqliteType.Integer);
+            var chapterCountParameter = insertBook.Parameters.Add("$chapterCount", SqliteType.Integer);
+
+            for (var index = 0; index < books.Length; index++)
+            {
+                var book = books[index];
+                bookIdParameter.Value = index + 1;
+                codeParameter.Value = book.Code;
+                nameParameter.Value = book.Name;
+                testamentParameter.Value = book.Testament;
+                orderParameter.Value = index + 1;
+                chapterCountParameter.Value = portugueseChapterCounts[book.Code];
+                insertBook.ExecuteNonQuery();
+            }
+
+            using var insertTranslation = connection.CreateCommand();
+            insertTranslation.Transaction = transaction;
+            insertTranslation.CommandText = """
+                INSERT INTO BibleTranslations (LanguageCode, TranslationName, VerseCount)
+                VALUES ($languageCode, $translationName, $verseCount);
+                """;
+            var translationLanguageParameter = insertTranslation.Parameters.Add("$languageCode", SqliteType.Text);
+            var translationNameParameter = insertTranslation.Parameters.Add("$translationName", SqliteType.Text);
+            var translationVerseCountParameter = insertTranslation.Parameters.Add("$verseCount", SqliteType.Integer);
+
+            foreach (var translation in translations)
+            {
+                translationLanguageParameter.Value = translation.LanguageCode;
+                translationNameParameter.Value = translation.TranslationName;
+                translationVerseCountParameter.Value = versesByLanguage[translation.LanguageCode].Count;
+                insertTranslation.ExecuteNonQuery();
+            }
+
+            using var insertVerse = connection.CreateCommand();
+            insertVerse.Transaction = transaction;
+            insertVerse.CommandText = """
+                INSERT INTO Verses (VerseId, BookId, Chapter, Verse)
+                VALUES ($verseId, $bookId, $chapter, $verse);
+                """;
+            var verseIdParameter = insertVerse.Parameters.Add("$verseId", SqliteType.Integer);
+            var verseBookIdParameter = insertVerse.Parameters.Add("$bookId", SqliteType.Integer);
+            var verseChapterParameter = insertVerse.Parameters.Add("$chapter", SqliteType.Integer);
+            var verseNumberParameter = insertVerse.Parameters.Add("$verse", SqliteType.Integer);
+
+            foreach (var reference in allReferences)
+            {
+                verseIdParameter.Value = verseIds[reference];
+                verseBookIdParameter.Value = reference.BookId;
+                verseChapterParameter.Value = reference.Chapter;
+                verseNumberParameter.Value = reference.Verse;
+                insertVerse.ExecuteNonQuery();
+            }
+
+            using var insertText = connection.CreateCommand();
+            insertText.Transaction = transaction;
+            insertText.CommandText = """
+                INSERT INTO BibleTexts (LanguageCode, VerseId, Text)
+                VALUES ($languageCode, $verseId, $text);
+                """;
+            var textLanguageParameter = insertText.Parameters.Add("$languageCode", SqliteType.Text);
+            var textVerseIdParameter = insertText.Parameters.Add("$verseId", SqliteType.Integer);
+            var textParameter = insertText.Parameters.Add("$text", SqliteType.Text);
+
+            foreach (var translation in translations)
+            {
+                textLanguageParameter.Value = translation.LanguageCode;
+                foreach (var verse in versesByLanguage[translation.LanguageCode])
+                {
+                    textVerseIdParameter.Value = verseIds[verse.Reference];
+                    textParameter.Value = verse.Text;
+                    insertText.ExecuteNonQuery();
+                }
+            }
+
+            transaction.Commit();
+        }
+
+        VerifyDatabase(connection, translations, versesByLanguage, verseIds);
     }
 
-    var chapter = int.Parse(match.Groups["chapter"].Value);
-    var verse = int.Parse(match.Groups["verse"].Value);
-    parsedVerses.Add(new VerseData(
-        Array.IndexOf(books, book) + 1,
-        chapter,
-        verse,
-        match.Groups["text"].Value.Trim()));
-    chapterCounts[code] = Math.Max(chapterCounts.GetValueOrDefault(code), chapter);
+    File.Move(temporaryDatabasePath, databasePath, overwrite: true);
 }
-
-var sourceBookCodes = parsedVerses
-    .Select(verse => books[verse.BookId - 1].Code)
-    .Distinct(StringComparer.Ordinal)
-    .ToHashSet(StringComparer.Ordinal);
-if (parsedVerses.Count != 31_102 || sourceBookCodes.Count != books.Length)
+finally
 {
-    Console.Error.WriteLine(
-        $"Unexpected Bible coverage: {parsedVerses.Count} verses across {sourceBookCodes.Count} books.");
-    return 2;
-}
-
-Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
-if (File.Exists(databasePath))
-{
-    File.Delete(databasePath);
-}
-
-using var connection = new SqliteConnection(new SqliteConnectionStringBuilder
-{
-    DataSource = databasePath
-}.ToString());
-connection.Open();
-
-using (var transaction = connection.BeginTransaction())
-{
-    using var createTables = connection.CreateCommand();
-    createTables.Transaction = transaction;
-    createTables.CommandText = """
-        CREATE TABLE Books (
-            BookId INTEGER NOT NULL PRIMARY KEY,
-            Code TEXT NOT NULL UNIQUE,
-            Name TEXT NOT NULL,
-            Testament TEXT NOT NULL,
-            BookOrder INTEGER NOT NULL,
-            ChapterCount INTEGER NOT NULL
-        );
-        CREATE TABLE Verses (
-            VerseId INTEGER NOT NULL PRIMARY KEY,
-            BookId INTEGER NOT NULL REFERENCES Books(BookId),
-            Chapter INTEGER NOT NULL,
-            Verse INTEGER NOT NULL,
-            Text TEXT NOT NULL,
-            UNIQUE (BookId, Chapter, Verse)
-        );
-        CREATE INDEX IX_Verses_Book_Chapter ON Verses (BookId, Chapter, Verse);
-        """;
-    createTables.ExecuteNonQuery();
-
-    using var insertBook = connection.CreateCommand();
-    insertBook.Transaction = transaction;
-    insertBook.CommandText = """
-        INSERT INTO Books (BookId, Code, Name, Testament, BookOrder, ChapterCount)
-        VALUES ($bookId, $code, $name, $testament, $bookOrder, $chapterCount);
-        """;
-    var bookIdParameter = insertBook.Parameters.Add("$bookId", SqliteType.Integer);
-    var codeParameter = insertBook.Parameters.Add("$code", SqliteType.Text);
-    var nameParameter = insertBook.Parameters.Add("$name", SqliteType.Text);
-    var testamentParameter = insertBook.Parameters.Add("$testament", SqliteType.Text);
-    var orderParameter = insertBook.Parameters.Add("$bookOrder", SqliteType.Integer);
-    var chapterCountParameter = insertBook.Parameters.Add("$chapterCount", SqliteType.Integer);
-
-    for (var index = 0; index < books.Length; index++)
+    if (File.Exists(temporaryDatabasePath))
     {
-        var book = books[index];
-        bookIdParameter.Value = index + 1;
-        codeParameter.Value = book.Code;
-        nameParameter.Value = book.Name;
-        testamentParameter.Value = book.Testament;
-        orderParameter.Value = index + 1;
-        chapterCountParameter.Value = chapterCounts[book.Code];
-        insertBook.ExecuteNonQuery();
+        File.Delete(temporaryDatabasePath);
     }
-
-    using var insertVerse = connection.CreateCommand();
-    insertVerse.Transaction = transaction;
-    insertVerse.CommandText = """
-        INSERT INTO Verses (BookId, Chapter, Verse, Text)
-        VALUES ($bookId, $chapter, $verse, $text);
-        """;
-    var verseBookIdParameter = insertVerse.Parameters.Add("$bookId", SqliteType.Integer);
-    var chapterParameter = insertVerse.Parameters.Add("$chapter", SqliteType.Integer);
-    var verseParameter = insertVerse.Parameters.Add("$verse", SqliteType.Integer);
-    var textParameter = insertVerse.Parameters.Add("$text", SqliteType.Text);
-
-    foreach (var verse in parsedVerses)
-    {
-        verseBookIdParameter.Value = verse.BookId;
-        chapterParameter.Value = verse.Chapter;
-        verseParameter.Value = verse.Verse;
-        textParameter.Value = verse.Text;
-        insertVerse.ExecuteNonQuery();
-    }
-
-    transaction.Commit();
 }
 
-using var verify = connection.CreateCommand();
-verify.CommandText = """
-    SELECT
-        (SELECT COUNT(*) FROM Books),
-        (SELECT COUNT(*) FROM Verses),
-        (SELECT Text FROM Verses WHERE BookId = 1 AND Chapter = 1 AND Verse = 1);
-    """;
-using var verificationReader = verify.ExecuteReader();
-if (!verificationReader.Read())
-{
-    Console.Error.WriteLine("Database verification did not return a result.");
-    return 1;
-}
-
-var storedBookCount = verificationReader.GetInt32(0);
-var storedVerseCount = verificationReader.GetInt32(1);
-var firstVerseText = verificationReader.GetString(2);
-verificationReader.Close();
-if (storedBookCount != books.Length || storedVerseCount != parsedVerses.Count ||
-    firstVerseText != "No princípio criou Deus os céus e a terra.")
-{
-    Console.Error.WriteLine(
-        $"Database verification failed: {storedBookCount} books, {storedVerseCount} verses, unexpected first verse.");
-    return 1;
-}
-
-using var integrityCheck = connection.CreateCommand();
-integrityCheck.CommandText = "PRAGMA integrity_check;";
-if (!string.Equals(integrityCheck.ExecuteScalar()?.ToString(), "ok", StringComparison.Ordinal))
-{
-    Console.Error.WriteLine("SQLite integrity check failed.");
-    return 1;
-}
-
-Console.WriteLine($"Created {databasePath} with {books.Length} books and {storedVerseCount:N0} verses.");
+Console.WriteLine(
+    $"Created {databasePath} with {books.Length} books and " +
+    $"{versesByLanguage.Values.Sum(verses => verses.Count):N0} verses across 3 translations.");
 return 0;
 
+static int GetStableVerseId(VerseReference reference) =>
+    checked(reference.BookId * 1_000_000 + reference.Chapter * 1_000 + reference.Verse);
+
+static void VerifyDatabase(
+    SqliteConnection connection,
+    IReadOnlyList<TranslationDefinition> translations,
+    IReadOnlyDictionary<string, List<VerseData>> versesByLanguage,
+    IReadOnlyDictionary<VerseReference, int> verseIds)
+{
+    using (var counts = connection.CreateCommand())
+    {
+        counts.CommandText = """
+            SELECT
+                (SELECT COUNT(*) FROM Books),
+                (SELECT COUNT(*) FROM BibleTranslations),
+                (SELECT COUNT(*) FROM Verses),
+                (SELECT COUNT(*) FROM BibleTexts);
+            """;
+        using var reader = counts.ExecuteReader();
+        if (!reader.Read() ||
+            reader.GetInt32(0) != 66 ||
+            reader.GetInt32(1) != translations.Count ||
+            reader.GetInt32(2) < 31_102 ||
+            reader.GetInt32(3) != versesByLanguage.Values.Sum(verses => verses.Count))
+        {
+            throw new InvalidDataException("The generated Bible database failed its coverage check.");
+        }
+    }
+
+    foreach (var translation in translations)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT BibleTranslations.VerseCount,
+                (SELECT COUNT(*)
+                 FROM BibleTexts
+                 WHERE BibleTexts.LanguageCode = BibleTranslations.LanguageCode),
+                (SELECT Text
+                 FROM BibleTexts
+                 WHERE BibleTexts.LanguageCode = BibleTranslations.LanguageCode
+                     AND BibleTexts.VerseId = $genesisOneOne)
+            FROM BibleTranslations
+            WHERE LanguageCode = $languageCode;
+            """;
+        command.Parameters.AddWithValue("$genesisOneOne", verseIds[new VerseReference(1, 1, 1)]);
+        command.Parameters.AddWithValue("$languageCode", translation.LanguageCode);
+        using var reader = command.ExecuteReader();
+        if (!reader.Read() ||
+            reader.GetInt32(0) != versesByLanguage[translation.LanguageCode].Count ||
+            reader.GetInt32(1) != reader.GetInt32(0) ||
+            string.IsNullOrWhiteSpace(reader.GetString(2)))
+        {
+            throw new InvalidDataException(
+                $"The generated Bible database failed verification for '{translation.LanguageCode}'.");
+        }
+
+        if (translation.LanguageCode == "pt-BR" &&
+            reader.GetString(2) != "No princípio criou Deus os céus e a terra.")
+        {
+            throw new InvalidDataException("The generated Portuguese Bible text failed verification.");
+        }
+    }
+
+    using (var integrityCheck = connection.CreateCommand())
+    {
+        integrityCheck.CommandText = "PRAGMA integrity_check;";
+        if (!string.Equals(integrityCheck.ExecuteScalar()?.ToString(), "ok", StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("SQLite integrity check failed.");
+        }
+    }
+
+    using (var foreignKeyCheck = connection.CreateCommand())
+    {
+        foreignKeyCheck.CommandText = "PRAGMA foreign_key_check;";
+        using var reader = foreignKeyCheck.ExecuteReader();
+        if (reader.Read())
+        {
+            throw new InvalidDataException("SQLite foreign key verification failed.");
+        }
+    }
+}
+
+internal sealed record TranslationDefinition(
+    string LanguageCode,
+    string TranslationName,
+    string SourcePath);
+
 internal sealed record BookDefinition(string Code, string Name, string Testament);
-internal sealed record VerseData(int BookId, int Chapter, int Verse, string Text);
+
+internal sealed record VerseData(VerseReference Reference, string Text);
+
+internal readonly record struct VerseReference(int BookId, int Chapter, int Verse);

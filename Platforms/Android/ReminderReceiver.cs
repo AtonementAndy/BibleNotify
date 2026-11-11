@@ -14,6 +14,7 @@ public sealed class ReminderReceiver : BroadcastReceiver
     public const string TitleKey = "reminder-title";
     public const string MessageKey = "reminder-message";
     public const string IsDefaultKey = "reminder-is-default";
+    public const string OpenDashboardKey = "open-dashboard-from-notification";
     private const string DefaultChannelId = "bible-reading";
 
     public override void OnReceive(Context? context, Intent? intent)
@@ -80,6 +81,7 @@ public sealed class ReminderReceiver : BroadcastReceiver
         var launchIntent = new Intent(receiverContext, typeof(MainActivity))
             .SetAction(Intent.ActionMain)
             .AddCategory(Intent.CategoryLauncher)
+            .PutExtra(OpenDashboardKey, true)
             .SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
         var contentIntent = PendingIntent.GetActivity(
             receiverContext,

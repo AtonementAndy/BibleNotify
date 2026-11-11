@@ -25,6 +25,7 @@ public sealed class UserDataService(
     private const int MaximumReminderMessageLength = 1000;
     private static readonly string DatabasePath = Path.Combine(FileSystem.AppDataDirectory, "user-data.db");
     private const string DatabaseEncryptionKeyName = "user-data-encryption-key";
+    private const string SignedInUserIdKey = "signed-in-user-id";
     private static readonly (string Title, string Message, int Hour, int Minute)[] PortugueseDefaultReminders =
     [
         ("Momento da manhã", "Comece o dia com alguns minutos na Palavra.", 8, 0),
@@ -104,10 +105,48 @@ public sealed class UserDataService(
         await SeedDefaultRemindersAsync(connection, transaction, userId, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
-        CurrentUser = await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        var user = await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        await SecureStorage.Default.SetAsync(
+            SignedInUserIdKey,
+            userId.ToString(System.Globalization.CultureInfo.InvariantCulture)).ConfigureAwait(false);
+        CurrentUser = user;
         IsGuestSession = false;
         IsFirstLoginInSession = true;
         SessionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async Task<bool> RestoreSessionAsync(CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync(cancellationToken).ConfigureAwait(false);
+        var savedUserId = await SecureStorage.Default.GetAsync(SignedInUserIdKey).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(savedUserId))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(savedUserId, out var userId) || userId <= 0)
+        {
+            SecureStorage.Default.Remove(SignedInUserIdKey);
+            logger.LogWarning("Discarded an invalid saved sign-in session.");
+            return false;
+        }
+
+        try
+        {
+            var user = await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
+            CurrentUser = user;
+            IsFirstLoginInSession = !user.HasSeenWelcome;
+        }
+        catch (InvalidDataException)
+        {
+            SecureStorage.Default.Remove(SignedInUserIdKey);
+            logger.LogWarning("Discarded a saved sign-in session for a missing local account.");
+            return false;
+        }
+
+        IsGuestSession = false;
+        SessionChanged?.Invoke(this, EventArgs.Empty);
+        return true;
     }
 
     public async Task<bool> SignInAsync(
@@ -157,6 +196,9 @@ public sealed class UserDataService(
         }
 
         var user = await GetUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        await SecureStorage.Default.SetAsync(
+            SignedInUserIdKey,
+            userId.ToString(System.Globalization.CultureInfo.InvariantCulture)).ConfigureAwait(false);
         CurrentUser = user;
         IsGuestSession = false;
         IsFirstLoginInSession = !user.HasSeenWelcome;
@@ -167,6 +209,7 @@ public sealed class UserDataService(
     public Task ContinueAsGuestAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        SecureStorage.Default.Remove(SignedInUserIdKey);
         CurrentUser = null;
         IsGuestSession = true;
         IsFirstLoginInSession = false;
@@ -177,6 +220,7 @@ public sealed class UserDataService(
     public Task SignOutAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        SecureStorage.Default.Remove(SignedInUserIdKey);
         CurrentUser = null;
         IsGuestSession = false;
         IsFirstLoginInSession = false;
@@ -579,6 +623,7 @@ public sealed class UserDataService(
     {
         var user = RequirePremium();
         ValidateNoteText(text);
+        await ValidateNoteReferenceAsync(bookId, chapter, verse, cancellationToken).ConfigureAwait(false);
 
         await ExecuteUserCommandAsync(
             """
@@ -604,6 +649,7 @@ public sealed class UserDataService(
     {
         var user = RequirePremium();
         ValidateNoteText(text);
+        await ValidateNoteReferenceAsync(bookId, chapter, verse, cancellationToken).ConfigureAwait(false);
 
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
@@ -1343,6 +1389,25 @@ public sealed class UserDataService(
         if (string.IsNullOrWhiteSpace(text) || text.Trim().Length > MaximumNoteLength)
         {
             throw new ArgumentException(Localizer.Get("A anotação deve ter entre 1 e 10000 caracteres."), nameof(text));
+        }
+    }
+
+    private async Task ValidateNoteReferenceAsync(
+        int bookId,
+        int chapter,
+        int verse,
+        CancellationToken cancellationToken)
+    {
+        if (bookId <= 0 || chapter <= 0 || verse <= 0)
+        {
+            throw new ArgumentException(Localizer.Get("A referência escolhida não está disponível na Bíblia."));
+        }
+
+        var verses = await bibleLibrary.GetChapterAsync(bookId, chapter, cancellationToken)
+            .ConfigureAwait(false);
+        if (verses.All(item => item.Verse != verse))
+        {
+            throw new ArgumentException(Localizer.Get("A referência escolhida não está disponível na Bíblia."));
         }
     }
 

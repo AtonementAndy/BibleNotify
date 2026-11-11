@@ -39,11 +39,6 @@ public static class MauiProgram
 		});
 #endif
 
-		builder.Services.AddSingleton(new HttpClient
-		{
-			BaseAddress = new Uri("https://bible-api.com/"),
-			Timeout = TimeSpan.FromSeconds(15)
-		});
 		builder.Services.AddSingleton<IBibleLibrary, BibleLibrary>();
 		builder.Services.AddSingleton<IUserDataService, UserDataService>();
 		builder.Services.AddSingleton<IAppNavigator, ShellNavigator>();

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using BibleNotify.Data.Models;
 using BibleNotify.Localization;
 using BibleNotify.Services;
@@ -169,29 +168,12 @@ public partial class HomeViewModel(
         catch (InvalidDataException exception)
         {
             logger.LogError(exception, "The Bible data source returned invalid data.");
-            ErrorMessage = Localizer.IsPortuguese
-                ? Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.")
-                : Localizer.Get("O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde.");
-        }
-        catch (HttpRequestException exception)
-        {
-            logger.LogWarning(exception, "Could not load a Bible passage from the online translation service.");
-            ErrorMessage = Localizer.Get("Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente.");
-        }
-        catch (TaskCanceledException exception)
-        {
-            logger.LogWarning(exception, "The online Bible request timed out.");
-            ErrorMessage = Localizer.Get("Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente.");
+            ErrorMessage = Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.");
         }
         catch (IOException exception)
         {
             logger.LogError(exception, "Could not load the daily Bible verse.");
             ErrorMessage = Localizer.Get("Não foi possível carregar o versículo. Tente novamente.");
-        }
-        catch (JsonException exception)
-        {
-            logger.LogError(exception, "The online Bible service returned malformed verse data.");
-            ErrorMessage = Localizer.Get("O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde.");
         }
         catch (SqliteException exception)
         {

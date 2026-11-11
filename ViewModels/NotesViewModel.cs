@@ -19,6 +19,12 @@ public partial class NotesViewModel(
     public partial ObservableCollection<BookInfo> Books { get; set; } = [];
 
     [ObservableProperty]
+    public partial ObservableCollection<int> Chapters { get; set; } = [];
+
+    [ObservableProperty]
+    public partial ObservableCollection<int> Verses { get; set; } = [];
+
+    [ObservableProperty]
     public partial ObservableCollection<BibleNote> Notes { get; set; } = [];
 
     [ObservableProperty]
@@ -47,6 +53,9 @@ public partial class NotesViewModel(
 
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsReferenceLoading { get; set; }
 
     [ObservableProperty]
     public partial string? ErrorMessage { get; set; }
@@ -79,6 +88,9 @@ public partial class NotesViewModel(
 
     public string NoteFormTitle => Localizer.Get(IsEditingNote ? "EDITANDO ANOTAÇÃO" : "NOVA ANOTAÇÃO");
 
+    private bool _suppressReferenceUpdates;
+    private int _referenceLoadVersion;
+
     [RelayCommand]
     private async Task LoadAsync()
     {
@@ -99,7 +111,14 @@ public partial class NotesViewModel(
             if (Books.Count == 0)
             {
                 Books = new ObservableCollection<BookInfo>(await bibleLibrary.GetBooksAsync());
+                _suppressReferenceUpdates = true;
                 SelectedBook = Books.FirstOrDefault();
+                _suppressReferenceUpdates = false;
+            }
+
+            if (SelectedBook is { } selectedBook)
+            {
+                await LoadReferenceAsync(selectedBook, SelectedChapter, SelectedVerse, refreshChapters: true);
             }
 
             Notes = IsPremium
@@ -135,6 +154,14 @@ public partial class NotesViewModel(
         if (SelectedBook is null || string.IsNullOrWhiteSpace(NoteText))
         {
             ErrorMessage = Localizer.Get("Escolha uma referência e escreva sua anotação.");
+            return;
+        }
+
+        if (IsReferenceLoading ||
+            !Chapters.Contains(SelectedChapter) ||
+            !Verses.Contains(SelectedVerse))
+        {
+            ErrorMessage = Localizer.Get("Escolha um capítulo e versículo disponíveis.");
             return;
         }
 
@@ -187,7 +214,7 @@ public partial class NotesViewModel(
     }
 
     [RelayCommand]
-    private void Edit(BibleNote note)
+    private async Task EditAsync(BibleNote note)
     {
         if (IsLocked)
         {
@@ -195,11 +222,19 @@ public partial class NotesViewModel(
         }
 
         EditingNote = note;
-        SelectedBook = Books.FirstOrDefault(book => book.BookId == note.BookId);
-        SelectedChapter = note.Chapter;
-        SelectedVerse = note.Verse;
-        NoteText = note.Text;
         ErrorMessage = null;
+        var book = Books.FirstOrDefault(item => item.BookId == note.BookId);
+        if (book is null)
+        {
+            ErrorMessage = Localizer.Get("A referência escolhida não está disponível na Bíblia.");
+            return;
+        }
+
+        _suppressReferenceUpdates = true;
+        SelectedBook = book;
+        _suppressReferenceUpdates = false;
+        await LoadReferenceAsync(book, note.Chapter, note.Verse, refreshChapters: true);
+        NoteText = note.Text;
     }
 
     [RelayCommand]
@@ -207,8 +242,11 @@ public partial class NotesViewModel(
     {
         EditingNote = null;
         NoteText = string.Empty;
-        SelectedChapter = 1;
-        SelectedVerse = 1;
+        if (SelectedBook is { } selectedBook)
+        {
+            _ = LoadReferenceAsync(selectedBook, 1, 1, refreshChapters: true);
+        }
+
         ErrorMessage = null;
     }
 
@@ -282,5 +320,94 @@ public partial class NotesViewModel(
         OnPropertyChanged(nameof(IsEditingNote));
         OnPropertyChanged(nameof(NoteFormTitle));
         OnPropertyChanged(nameof(SaveButtonText));
+    }
+
+    partial void OnSelectedBookChanged(BookInfo? value)
+    {
+        if (!_suppressReferenceUpdates && value is not null)
+        {
+            _ = LoadReferenceAsync(value, 1, 1, refreshChapters: true);
+        }
+    }
+
+    partial void OnSelectedChapterChanged(int value)
+    {
+        if (!_suppressReferenceUpdates && SelectedBook is { } selectedBook && value > 0)
+        {
+            _ = LoadReferenceAsync(selectedBook, value, 1, refreshChapters: false);
+        }
+    }
+
+    private async Task LoadReferenceAsync(
+        BookInfo book,
+        int chapter,
+        int verse,
+        bool refreshChapters)
+    {
+        var requestVersion = ++_referenceLoadVersion;
+        IsReferenceLoading = true;
+        ErrorMessage = null;
+        try
+        {
+            if (chapter < 1 || chapter > book.ChapterCount)
+            {
+                ErrorMessage = Localizer.Get("A referência escolhida não está disponível na Bíblia.");
+                return;
+            }
+
+            _suppressReferenceUpdates = true;
+            if (refreshChapters)
+            {
+                SelectedChapter = 0;
+                Chapters = new ObservableCollection<int>(Enumerable.Range(1, book.ChapterCount));
+                SelectedChapter = chapter;
+            }
+
+            SelectedVerse = 0;
+            Verses = [];
+            _suppressReferenceUpdates = false;
+
+            var chapterVerses = await bibleLibrary.GetChapterAsync(book.BookId, chapter);
+            if (requestVersion != _referenceLoadVersion ||
+                SelectedBook?.BookId != book.BookId ||
+                SelectedChapter != chapter)
+            {
+                return;
+            }
+
+            Verses = new ObservableCollection<int>(chapterVerses.Select(item => item.Verse));
+            if (Verses.Count == 0)
+            {
+                ErrorMessage = Localizer.Get("Este capítulo não está disponível.");
+                return;
+            }
+
+            _suppressReferenceUpdates = true;
+            SelectedVerse = Verses.Contains(verse) ? verse : Verses[0];
+            _suppressReferenceUpdates = false;
+        }
+        catch (InvalidDataException exception)
+        {
+            logger.LogError(exception, "The Bible data source returned invalid reference data.");
+            ErrorMessage = Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.");
+        }
+        catch (IOException exception)
+        {
+            logger.LogError(exception, "Could not load note reference options.");
+            ErrorMessage = Localizer.Get("Não foi possível carregar as opções de referência. Tente novamente.");
+        }
+        catch (SqliteException exception)
+        {
+            logger.LogError(exception, "Could not query note reference options.");
+            ErrorMessage = Localizer.Get("Não foi possível carregar as opções de referência. Tente novamente.");
+        }
+        finally
+        {
+            if (requestVersion == _referenceLoadVersion)
+            {
+                _suppressReferenceUpdates = false;
+                IsReferenceLoading = false;
+            }
+        }
     }
 }

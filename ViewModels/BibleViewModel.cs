@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using BibleNotify.Data.Models;
 using BibleNotify.Localization;
 using BibleNotify.Services;
@@ -105,9 +104,7 @@ public partial class BibleViewModel : ObservableObject
         catch (InvalidDataException exception)
         {
             _logger.LogError(exception, "The Bible data source returned invalid data.");
-            ErrorMessage = Localizer.IsPortuguese
-                ? Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.")
-                : Localizer.Get("O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde.");
+            ErrorMessage = Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.");
         }
         catch (IOException exception)
         {
@@ -164,29 +161,12 @@ public partial class BibleViewModel : ObservableObject
         catch (InvalidDataException exception)
         {
             _logger.LogError(exception, "The Bible data source returned invalid chapter data.");
-            ErrorMessage = Localizer.IsPortuguese
-                ? Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.")
-                : Localizer.Get("O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde.");
-        }
-        catch (HttpRequestException exception)
-        {
-            _logger.LogWarning(exception, "Could not load the selected chapter from the online Bible.");
-            ErrorMessage = Localizer.Get("Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente.");
-        }
-        catch (TaskCanceledException exception)
-        {
-            _logger.LogWarning(exception, "The online Bible chapter request timed out.");
-            ErrorMessage = Localizer.Get("Não foi possível carregar a Bíblia online. Verifique sua conexão e tente novamente.");
+            ErrorMessage = Localizer.Get("O banco da Bíblia está inválido. Reinstale o aplicativo.");
         }
         catch (IOException exception)
         {
             _logger.LogError(exception, "Could not load the selected Bible chapter.");
             ErrorMessage = Localizer.Get("Não foi possível abrir este capítulo. Tente novamente.");
-        }
-        catch (JsonException exception)
-        {
-            _logger.LogError(exception, "The online Bible service returned malformed chapter data.");
-            ErrorMessage = Localizer.Get("O serviço da Bíblia retornou dados inválidos. Tente novamente mais tarde.");
         }
         catch (SqliteException exception)
         {
